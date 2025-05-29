@@ -916,6 +916,202 @@ def on_leave_battlemap():
     if 'username' in session:
         leave_room('battlemap')
 
+
+# Enhanced character routes with deletion
+@app.route('/api/characters/<int:char_id>', methods=['DELETE'])
+def delete_character(char_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    conn = get_db_connection()
+    
+    # Check if user owns character or is DM
+    character = conn.execute(
+        'SELECT user_id, name FROM characters WHERE id = ?', (char_id,)
+    ).fetchone()
+    
+    if not character:
+        conn.close()
+        return jsonify({'error': 'Character not found'}), 404
+    
+    if character['user_id'] != session['user_id'] and session['role'] != 'dm':
+        conn.close()
+        return jsonify({'error': 'Permission denied'}), 403
+    
+    # Delete the character
+    conn.execute('DELETE FROM characters WHERE id = ?', (char_id,))
+    conn.commit()
+    conn.close()
+    
+    socketio.emit('character_update', {
+        'action': 'delete', 
+        'character_id': char_id,
+        'character_name': character['name'],
+        'deleted_by': session['username']
+    }, room='campaign')
+    
+    return jsonify({'success': True})
+
+# Enhanced character creation with full stats
+@app.route('/api/characters', methods=['POST'])
+def create_character():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    data = request.get_json()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Create character with full D&D stats
+    cursor.execute('''
+        INSERT INTO characters (
+            user_id, name, class, race, background, level, alignment,
+            hp_current, hp_max, ac, speed, initiative,
+            strength, dexterity, constitution, intelligence, wisdom, charisma,
+            proficiency_bonus, inspiration, 
+            skills, saving_throws, languages, proficiencies,
+            equipment, features_traits, attacks_spells,
+            personality_traits, ideals, bonds, flaws,
+            stats, spell_slots, status_effects, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        session['user_id'],
+        data.get('name', ''),
+        data.get('class', ''),
+        data.get('race', ''),
+        data.get('background', ''),
+        data.get('level', 1),
+        data.get('alignment', ''),
+        data.get('hp_current', 10),
+        data.get('hp_max', 10),
+        data.get('ac', 10),
+        data.get('speed', 30),
+        data.get('initiative', 0),
+        data.get('strength', 10),
+        data.get('dexterity', 10),
+        data.get('constitution', 10),
+        data.get('intelligence', 10),
+        data.get('wisdom', 10),
+        data.get('charisma', 10),
+        data.get('proficiency_bonus', 2),
+        data.get('inspiration', 0),
+        json.dumps(data.get('skills', {})),
+        json.dumps(data.get('saving_throws', {})),
+        data.get('languages', ''),
+        data.get('proficiencies', ''),
+        data.get('equipment', ''),
+        data.get('features_traits', ''),
+        data.get('attacks_spells', ''),
+        data.get('personality_traits', ''),
+        data.get('ideals', ''),
+        data.get('bonds', ''),
+        data.get('flaws', ''),
+        json.dumps(data.get('stats', {})),
+        json.dumps(data.get('spell_slots', {})),
+        json.dumps(data.get('status_effects', [])),
+        data.get('notes', '')
+    ))
+    
+    char_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    
+    socketio.emit('character_update', {'action': 'create', 'character_id': char_id}, room='campaign')
+    
+    return jsonify({'success': True, 'character_id': char_id})
+
+# Get full character sheet data
+@app.route('/api/characters/<int:char_id>/sheet')
+def get_character_sheet(char_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    conn = get_db_connection()
+    character = conn.execute(
+        'SELECT c.*, u.username FROM characters c JOIN users u ON c.user_id = u.id WHERE c.id = ?', 
+        (char_id,)
+    ).fetchone()
+    conn.close()
+    
+    if not character:
+        return jsonify({'error': 'Character not found'}), 404
+    
+    # Check permissions (owner or DM)
+    if character['user_id'] != session['user_id'] and session['role'] != 'dm':
+        return jsonify({'error': 'Permission denied'}), 403
+    
+    # Convert to dict and parse JSON fields
+    char_data = dict(character)
+    try:
+        char_data['skills'] = json.loads(character['skills']) if character['skills'] else {}
+        char_data['saving_throws'] = json.loads(character['saving_throws']) if character['saving_throws'] else {}
+        char_data['spell_slots'] = json.loads(character['spell_slots']) if character['spell_slots'] else {}
+        char_data['status_effects'] = json.loads(character['status_effects']) if character['status_effects'] else []
+        char_data['stats'] = json.loads(character['stats']) if character['stats'] else {}
+    except:
+        # Handle malformed JSON
+        char_data['skills'] = {}
+        char_data['saving_throws'] = {}
+        char_data['spell_slots'] = {}
+        char_data['status_effects'] = []
+        char_data['stats'] = {}
+    
+    return jsonify(char_data)
+
+# Update database schema for full character sheets
+def update_character_schema():
+    """Update characters table with full D&D character sheet fields"""
+    conn = sqlite3.connect('shadowmar.db')
+    cursor = conn.cursor()
+    
+    # Add new columns for full character sheet
+    new_columns = [
+        ('race', 'TEXT DEFAULT ""'),
+        ('background', 'TEXT DEFAULT ""'),
+        ('alignment', 'TEXT DEFAULT ""'),
+        ('strength', 'INTEGER DEFAULT 10'),
+        ('dexterity', 'INTEGER DEFAULT 10'),
+        ('constitution', 'INTEGER DEFAULT 10'),
+        ('intelligence', 'INTEGER DEFAULT 10'),
+        ('wisdom', 'INTEGER DEFAULT 10'),
+        ('charisma', 'INTEGER DEFAULT 10'),
+        ('proficiency_bonus', 'INTEGER DEFAULT 2'),
+        ('inspiration', 'INTEGER DEFAULT 0'),
+        ('skills', 'TEXT DEFAULT "{}"'),
+        ('saving_throws', 'TEXT DEFAULT "{}"'),
+        ('languages', 'TEXT DEFAULT ""'),
+        ('proficiencies', 'TEXT DEFAULT ""'),
+        ('equipment', 'TEXT DEFAULT ""'),
+        ('features_traits', 'TEXT DEFAULT ""'),
+        ('attacks_spells', 'TEXT DEFAULT ""'),
+        ('personality_traits', 'TEXT DEFAULT ""'),
+        ('ideals', 'TEXT DEFAULT ""'),
+        ('bonds', 'TEXT DEFAULT ""'),
+        ('flaws', 'TEXT DEFAULT ""'),
+        ('speed', 'INTEGER DEFAULT 30'),
+        ('token_x', 'INTEGER DEFAULT 0'),
+        ('token_y', 'INTEGER DEFAULT 0'),
+        ('initiative', 'INTEGER DEFAULT 0'),
+        ('in_combat', 'BOOLEAN DEFAULT FALSE'),
+        ('status_effects', 'TEXT DEFAULT "[]"'),
+        ('spell_slots', 'TEXT DEFAULT "{}"')
+    ]
+    
+    for column_name, column_def in new_columns:
+        try:
+            cursor.execute(f'ALTER TABLE characters ADD COLUMN {column_name} {column_def}')
+            print(f"Added column: {column_name}")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e):
+                continue  # Column already exists
+            else:
+                print(f"Error adding column {column_name}: {e}")
+    
+    conn.commit()
+    conn.close()
+    print("✅ Character schema updated!")
+
+
 if __name__ == '__main__':
     init_db()
     # Use port from environment variable or default to 5000
