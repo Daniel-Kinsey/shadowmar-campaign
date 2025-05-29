@@ -280,5 +280,79 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <!-- TEMPORARY DEBUG SCRIPT -->
+<script>
+console.log('=== DM BOOK DEBUG ===');
+
+// Test 1: Check if elements exist
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded');
+    
+    const dmBookTab = document.querySelector('[data-tab="dm-book"]');
+    const dmBookContent = document.getElementById('dm-book-tab');
+    const chapterContent = document.getElementById('book-chapter-content');
+    
+    console.log('DM Book tab button:', dmBookTab);
+    console.log('DM Book content area:', dmBookContent);
+    console.log('Chapter content area:', chapterContent);
+    
+    // Test 2: Add click handler
+    if (dmBookTab) {
+        dmBookTab.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('DM Book tab clicked!');
+            
+            // Show the tab
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            dmBookContent.classList.add('active');
+            dmBookTab.classList.add('active');
+            
+            // Load content
+            testLoadContent();
+        });
+    } else {
+        console.error('DM Book tab button not found!');
+    }
+});
+
+// Test 3: Load content function
+async function testLoadContent() {
+    console.log('Loading content...');
+    const content = document.getElementById('book-chapter-content');
+    
+    if (!content) {
+        console.error('book-chapter-content element not found!');
+        return;
+    }
+    
+    content.innerHTML = '<div class="loading-book">Loading test...</div>';
+    
+    try {
+        const response = await fetch('/api/dm/book/overview');
+        console.log('API Response status:', response.status);
+        
+        const data = await response.json();
+        console.log('API Data:', data);
+        
+        if (response.ok) {
+            content.innerHTML = `<h2>${data.title}</h2>${data.content}`;
+            console.log('Content loaded successfully!');
+        } else {
+            content.innerHTML = `<p>Error: ${data.error}</p>`;
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+        content.innerHTML = `<p>Network error: ${error.message}</p>`;
+    }
+}
+</script>
+<!-- END DEBUG SCRIPT -->
 </body>
 </html>
