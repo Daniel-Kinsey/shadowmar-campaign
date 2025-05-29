@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronicles of Shadowmar - D&D Campaign</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <h1>⚔️ Chronicles of Shadowmar</h1>
+                <div class="header-controls">
+                    <span id="username-display">{{ session.username }}</span>
+                    <span class="role-badge" id="role-badge">{{ session.role }}</span>
+                    <button id="logout-btn" class="btn btn-secondary">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container">
+                <!-- Tab Navigation -->
+                <nav class="tabs">
+                    <button class="tab-btn active" data-tab="characters">Characters</button>
+                    <button class="tab-btn" data-tab="campaign">Campaign</button>
+                    <button class="tab-btn" data-tab="chat">Chat</button>
+                    <button class="tab-btn" data-tab="files">Files</button>
+                    <button class="tab-btn" data-tab="combat">⚔️ Combat</button>
+                    <button class="tab-btn" data-tab="battlemap">🗺️ Battle Map</button>
+                    <button class="tab-btn" data-tab="dm-book">📖 DM Book</button>
+                </nav>
+
+                <!-- Characters Tab -->
+                <div id="characters-tab" class="tab-content active">
+                    <div class="tab-header">
+                        <h2>Characters</h2>
+                        <button id="add-character-btn" class="btn btn-primary">+ Add Character</button>
+                    </div>
+                    
+                    <div id="characters-grid" class="characters-grid">
+                        <!-- Characters will be loaded here -->
+                    </div>
+
+                    <!-- Character Modal -->
+                    <div id="character-modal" class="modal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 id="character-modal-title">Add Character</h3>
+                                <span class="close">&times;</span>
+                            </div>
+                            <div class="modal-body">
+                                <form id="character-form">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="char-name">Character Name</label>
+                                            <input type="text" id="char-name" name="name" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="char-class">Class</label>
+                                            <input type="text" id="char-class" name="class">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="char-level">Level</label>
+                                            <input type="number" id="char-level" name="level" min="1" max="20" value="1">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="char-ac">Armor Class</label>
+                                            <input type="number" id="char-ac" name="ac" min="1" value="10">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="char-hp-current">Current HP</label>
+                                            <input type="number" id="char-hp-current" name="hp_current" min="0" value="10">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="char-hp-max">Max HP</label>
+                                            <input type="number" id="char-hp-max" name="hp_max" min="1" value="10">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="char-speed">Speed (ft)</label>
+                                            <input type="number" id="char-speed" name="speed" min="0" value="30">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="char-initiative">Initiative Modifier</label>
+                                            <input type="number" id="char-initiative" name="initiative" value="0">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="char-notes">Notes</label>
+                                        <textarea id="char-notes" name="notes" rows="4" placeholder="Character backstory, equipment, etc."></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" id="cancel-character" class="btn btn-secondary">Cancel</button>
+                                <button type="button" id="save-character" class="btn btn-primary">Save Character</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campaign Tab -->
+                <div id="campaign-tab" class="tab-content">
+                    <div class="tab-header">
+                        <h2>Campaign Information</h2>
+                    </div>
+                    
+                    <div class="campaign-sections">
+                        <div class="campaign-section">
+                            <h3>Current Location</h3>
+                            <div class="editable-field" data-field="location">
+                                <span class="field-content">Loading...</span>
+                                <button class="edit-btn">Edit</button>
+                            </div>
+                        </div>
+                        
+                        <div class="campaign-section">
+                            <h3>Session Notes</h3>
+                            <div class="editable-field" data-field="session_notes">
+                                <div class="field-content">Loading...</div>
+                                <button class="edit-btn">Edit</button>
+                            </div>
+                        </div>
+                        
+                        <div class="campaign-section">
+                            <h3>Important NPCs</h3>
+                            <div class="editable-field" data-field="npcs">
+                                <div class="field-content">Loading...</div>
+                                <button class="edit-btn">Edit</button>
+                            </div>
+                        </div>
+                        
+                        <div class="campaign-section">
+                            <h3>Treasure & Loot</h3>
+                            <div class="editable-field" data-field="treasure">
+                                <div class="field-content">Loading...</div>
+                                <button class="edit-btn">Edit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Tab -->
+                <div id="chat-tab" class="tab-content">
+                    <div class="chat-container">
+                        <div class="chat-header">
+                            <h3>Campaign Chat</h3>
+                            <div class="chat-controls">
+                                <button id="secret-message-btn" class="btn btn-secondary btn-small">📜 Secret Message</button>
+                                <button id="dice-roll-btn" class="btn btn-secondary btn-small">🎲 Roll Dice</button>
+                            </div>
+                        </div>
+                        
+                        <div id="chat-messages" class="chat-messages">
+                            <!-- Messages will be loaded here -->
+                        </div>
+                        
+                        <div class="chat-input-container">
+                            <input type="text" id="chat-input" placeholder="Type your message..." maxlength="500">
+                            <button id="send-message" class="btn btn-primary">Send</button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Dice Panel -->
+                    <div id="quick-dice-panel" class="quick-dice-panel" style="display: none;">
+                        <div class="dice-controls">
+                            <div class="form-group">
+                                <label for="dice-type">Dice</label>
+                                <select id="dice-type">
+                                    <option value="d4">d4</option>
+                                    <option value="d6">d6</option>
+                                    <option value="d8">d8</option>
+                                    <option value="d10">d10</option>
+                                    <option value="d12">d12</option>
+                                    <option value="d20" selected>d20</option>
+                                    <option value="d100">d100</option>
+                                    <option value="2d6">2d6</option>
+                                    <option value="3d6">3d6</option>
+                                    <option value="4d6">4d6</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="dice-modifier">Modifier</label>
+                                <input type="number" id="dice-modifier" value="0" min="-10" max="20">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="dice-reason">Reason</label>
+                                <input type="text" id="dice-reason" placeholder="Attack roll, etc.">
+                            </div>
+                            
+                            <button id="roll-dice" class="btn btn-primary">Roll</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Files Tab -->
+                <div id="files-tab" class="tab-content">
+                    <div class="tab-header">
+                        <h2>Campaign Files</h2>
+                        <div class="file-upload-container">
+                            <input type="file" id="file-input" accept=".txt,.pdf,.png,.jpg,.jpeg,.gif,.doc,.docx" style="display: none;">
+                            <button id="upload-btn" class="btn btn-primary">Upload File</button>
+                        </div>
+                    </div>
+                    
+                    <div id="files-list" class="files-list">
+                        <!-- Files will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Combat Tab -->
+                <div id="combat-tab" class="tab-content">
+                    <div class="tab-header">
+                        <h2>⚔️ Combat Tracker</h2>
+                        <div class="combat-controls" id="dm-combat-controls" style="display: none;">
+                            <button id="start-combat-btn" class="btn btn-primary">Start Combat</button>
+                            <button id="end-combat-btn" class="btn btn-danger" style="display: none;">End Combat</button>
+                            <button id="next-turn-btn" class="btn btn-secondary" style="display: none;">Next Turn</button>
+                        </div>
+                    </div>
+                    
+                    <div id="combat-tracker" class="combat-tracker">
+                        <div id="combat-status" class="combat-status">
+                            <p>Combat is not active</p>
+                        </div>
+                        
+                        <div id="initiative-order" class="initiative-order" style="display: none;">
+                            <h3>Initiative Order</h3>
+                            <div id="combatants-list" class="combatants-list">
+                                <!-- Combatants will be displayed here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Player Character Sheet Excerpt -->
+                        <div id="player-combat-sheet" class="player-combat-sheet">
+                            <h3>Your Character</h3>
+                            <div id="player-character-stats">
+                                <!-- Player's character combat stats -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Start Combat Modal -->
+                    <div id="combat-setup-modal" class="modal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>Setup Combat</h3>
+                                <span class="close">&times;</span>
+                            </div>
+                            <div class="modal-body">
+                                <div id="combat-setup-characters" class="combat-setup-characters">
+                                    <h4>Player Characters</h4>
+                                    <div id="pc-combat-list">
+                                        <!-- Player characters for combat -->
+                                    </div>
+                                </div>
+                                <div class="combat-setup-enemies">
+                                    <h4>Enemies/NPCs</h4>
+                                    <button id="add-enemy-btn" class="btn btn-secondary">+ Add Enemy</button>
+                                    <div id="enemy-combat-list">
+                                        <!-- Enemies for combat -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" id="cancel-combat-setup" class="btn btn-secondary">Cancel</button>
+                                <button type="button" id="confirm-combat-start" class="btn btn-primary">Start Combat</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Battle Map Tab -->
+                <div id="battlemap-tab" class="tab-content">
+                    <div class="tab-header">
+                        <h2>🗺️ Battle Map</h2>
+                        <div class="battlemap-controls">
+                            <button id="open-battlemap-window" class="btn btn-primary">📺 Open in New Window</button>
+                            <button id="toggle-grid" class="btn btn-secondary">Toggle Grid</button>
+                            <button id="center-map" class="btn btn-secondary">Center Map</button>
+                        </div>
+                    </div>
+                    
+                    <div id="battlemap-container" class="battlemap-container">
+                        <div id="battlemap-canvas-wrapper" class="battlemap-canvas-wrapper">
+                            <canvas id="battlemap-canvas" width="800" height="600"></canvas>
+                            <div id="battlemap-tokens" class="battlemap-tokens">
+                                <!-- Token elements will be positioned here -->
+                            </div>
+                        </div>
+                        
+                        <div class="battlemap-sidebar">
+                            <h4>Map Controls</h4>
+                            <div class="map-tools">
+                                <button class="tool-btn active" data-tool="select">📍 Select</button>
+                                <button class="tool-btn" data-tool="move">🏃 Move</button>
+                                <button class="tool-btn" data-tool="measure">📏 Measure</button>
+                            </div>
+                            
+                            <div class="token-list">
+                                <h4>Tokens</h4>
+                                <div id="token-list-items">
+                                    <!-- Tokens listed here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DM Book Tab -->
+                <div id="dm-book-tab" class="tab-content">
+                    <div class="tab-header">
+                        <h2>📖 Chronicles of Shadowmar: DM's Compendium</h2>
+                        <div class="dm-book-controls" id="dm-book-edit-controls" style="display: none;">
+                            <button id="edit-chapter-btn" class="btn btn-secondary">✏️ Edit Chapter</button>
+                            <button id="save-chapter-btn" class="btn btn-primary" style="display: none;">💾 Save Chapter</button>
+                            <button id="cancel-edit-btn" class="btn btn-secondary" style="display: none;">❌ Cancel</button>
+                        </div>
+                    </div>
+                    
+                    <div class="dm-book-container">
+                        <div class="book-navigation">
+                            <h3>Table of Contents</h3>
+                            <ul class="book-chapters">
+                                <li><button class="chapter-btn active" data-section="overview">🌊 World Overview</button></li>
+                                <li><button class="chapter-btn" data-section="sessions">📜 Session Archive</button></li>
+                                <li><button class="chapter-btn" data-section="xylos">🏛️ The Drowned City</button></li>
+                                <li><button class="chapter-btn" data-section="npcs">👥 NPCs of Xylos</button></li>
+                                <li><button class="chapter-btn" data-section="encounters">⚔️ Encounters & Combat</button></li>
+                                <li><button class="chapter-btn" data-section="lore">📚 World Lore & Secrets</button></li>
+                                <li><button class="chapter-btn" data-section="tools">🔧 DM Tools & Reference</button></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="book-content">
+                            <div class="book-page">
+                                <div id="book-chapter-content">
+                                    <div class="loading-book">Loading the ancient tome...</div>
+                                </div>
+                                <div id="book-chapter-editor" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="chapter-title">Chapter Title</label>
+                                        <input type="text" id="chapter-title" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="chapter-content">Chapter Content (HTML allowed)</label>
+                                        <textarea id="chapter-content" rows="20" class="form-control"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Secret Message Modal -->
+    <div id="secret-message-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📜 Send Secret Message</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="secret-recipient">Recipient</label>
+                    <select id="secret-recipient" class="form-control">
+                        <option value="">Select recipient...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="secret-message-text">Message</label>
+                    <textarea id="secret-message-text" rows="4" placeholder="Your secret message..." class="form-control"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="cancel-secret-message" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="send-secret-message" class="btn btn-primary">Send Message</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Field Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="edit-modal-title">Edit Field</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <textarea id="edit-textarea" rows="6"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="cancel-edit" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="save-edit" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secret Message Parchment -->
+    <div id="secret-parchment" class="secret-parchment" style="display: none;">
+        <div class="parchment-content">
+            <div class="parchment-header">
+                <span class="parchment-from">From: <span id="parchment-sender"></span></span>
+                <button class="parchment-close">×</button>
+            </div>
+            <div class="parchment-message" id="parchment-message"></div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notifications" class="notifications"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
