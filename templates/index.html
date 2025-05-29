@@ -34,8 +34,8 @@
                     <button class="tab-btn" data-tab="dm-book">📖 DM Book</button>
                 </nav>
 
-                <!-- Characters Tab -->
-                <div id="characters-tab" class="tab-content active">
+                <!-- s Tab -->
+                <div id="s-tab" class="tab-content active">
                     <div class="tab-header">
                         <h2>Characters</h2>
                         <button id="add-character-btn" class="btn btn-primary">+ Add Character</button>
@@ -45,72 +45,459 @@
                         <!-- Characters will be loaded here -->
                     </div>
 
-                    <!-- Character Modal -->
-                    <div id="character-modal" class="modal">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h3 id="character-modal-title">Add Character</h3>
-                                <span class="close">&times;</span>
+                    <!-- Enhanced Character Modal with Full Sheet -->
+<div id="character-sheet-modal" class="modal character-sheet-modal">
+    <div class="modal-content character-sheet-content">
+        <div class="modal-header">
+            <h3 id="character-sheet-title">Character Sheet</h3>
+            <div class="character-sheet-controls">
+                <button id="delete-character-btn" class="btn btn-danger btn-small" style="display: none;">🗑️ Delete</button>
+                <span class="close">&times;</span>
+            </div>
+        </div>
+        <div class="modal-body character-sheet-body">
+            <div class="character-sheet">
+                <!-- Header Section -->
+                <div class="sheet-header">
+                    <div class="character-banner">
+                        <div class="form-group">
+                            <label for="sheet-char-name">Character Name</label>
+                            <input type="text" id="sheet-char-name" class="sheet-input large-text" placeholder="Enter character name">
+                        </div>
+                    </div>
+                    
+                    <div class="character-basics">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sheet-class">Class</label>
+                                <input type="text" id="sheet-class" class="sheet-input" placeholder="Fighter">
                             </div>
-                            <div class="modal-body">
-                                <form id="character-form">
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="char-name">Character Name</label>
-                                            <input type="text" id="char-name" name="name" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="char-class">Class</label>
-                                            <input type="text" id="char-class" name="class">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="char-level">Level</label>
-                                            <input type="number" id="char-level" name="level" min="1" max="20" value="1">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="char-ac">Armor Class</label>
-                                            <input type="number" id="char-ac" name="ac" min="1" value="10">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="char-hp-current">Current HP</label>
-                                            <input type="number" id="char-hp-current" name="hp_current" min="0" value="10">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="char-hp-max">Max HP</label>
-                                            <input type="number" id="char-hp-max" name="hp_max" min="1" value="10">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="char-speed">Speed (ft)</label>
-                                            <input type="number" id="char-speed" name="speed" min="0" value="30">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="char-initiative">Initiative Modifier</label>
-                                            <input type="number" id="char-initiative" name="initiative" value="0">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="char-notes">Notes</label>
-                                        <textarea id="char-notes" name="notes" rows="4" placeholder="Character backstory, equipment, etc."></textarea>
-                                    </div>
-                                </form>
+                            <div class="form-group">
+                                <label for="sheet-level">Level</label>
+                                <input type="number" id="sheet-level" class="sheet-input" min="1" max="20" value="1">
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" id="cancel-character" class="btn btn-secondary">Cancel</button>
-                                <button type="button" id="save-character" class="btn btn-primary">Save Character</button>
+                            <div class="form-group">
+                                <label for="sheet-race">Race</label>
+                                <input type="text" id="sheet-race" class="sheet-input" placeholder="Human">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sheet-background">Background</label>
+                                <input type="text" id="sheet-background" class="sheet-input" placeholder="Soldier">
+                            </div>
+                            <div class="form-group">
+                                <label for="sheet-alignment">Alignment</label>
+                                <input type="text" id="sheet-alignment" class="sheet-input" placeholder="Lawful Good">
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Main Character Sheet Layout -->
+                <div class="sheet-main">
+                    <!-- Left Column -->
+                    <div class="sheet-left">
+                        <!-- Ability Scores -->
+                        <div class="ability-scores">
+                            <h4>🎲 Ability Scores</h4>
+                            <div class="abilities-grid">
+                                <div class="ability-score">
+                                    <label>STR</label>
+                                    <div class="ability-box">
+                                        <input type="number" id="sheet-strength" class="ability-input" min="1" max="30" value="10">
+                                        <div class="ability-modifier" id="str-modifier">+0</div>
+                                    </div>
+                                </div>
+                                <div class="ability-score">
+                                    <label>DEX</label>
+                                    <div class="ability-box">
+                                        <input type="number" id="sheet-dexterity" class="ability-input" min="1" max="30" value="10">
+                                        <div class="ability-modifier" id="dex-modifier">+0</div>
+                                    </div>
+                                </div>
+                                <div class="ability-score">
+                                    <label>CON</label>
+                                    <div class="ability-box">
+                                        <input type="number" id="sheet-constitution" class="ability-input" min="1" max="30" value="10">
+                                        <div class="ability-modifier" id="con-modifier">+0</div>
+                                    </div>
+                                </div>
+                                <div class="ability-score">
+                                    <label>INT</label>
+                                    <div class="ability-box">
+                                        <input type="number" id="sheet-intelligence" class="ability-input" min="1" max="30" value="10">
+                                        <div class="ability-modifier" id="int-modifier">+0</div>
+                                    </div>
+                                </div>
+                                <div class="ability-score">
+                                    <label>WIS</label>
+                                    <div class="ability-box">
+                                        <input type="number" id="sheet-wisdom" class="ability-input" min="1" max="30" value="10">
+                                        <div class="ability-modifier" id="wis-modifier">+0</div>
+                                    </div>
+                                </div>
+                                <div class="ability-score">
+                                    <label>CHA</label>
+                                    <div class="ability-box">
+                                        <input type="number" id="sheet-charisma" class="ability-input" min="1" max="30" value="10">
+                                        <div class="ability-modifier" id="cha-modifier">+0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Inspiration and Proficiency -->
+                        <div class="sheet-section">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="sheet-inspiration">Inspiration</label>
+                                    <input type="number" id="sheet-inspiration" class="sheet-input circle-input" min="0" max="1" value="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sheet-proficiency">Proficiency Bonus</label>
+                                    <input type="number" id="sheet-proficiency" class="sheet-input circle-input" min="2" max="6" value="2">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Saving Throws -->
+                        <div class="sheet-section">
+                            <h4>💾 Saving Throws</h4>
+                            <div class="saves-list">
+                                <div class="save-item">
+                                    <input type="checkbox" id="save-str-prof" class="save-checkbox">
+                                    <span class="save-modifier" id="save-str">+0</span>
+                                    <label for="save-str-prof">Strength</label>
+                                </div>
+                                <div class="save-item">
+                                    <input type="checkbox" id="save-dex-prof" class="save-checkbox">
+                                    <span class="save-modifier" id="save-dex">+0</span>
+                                    <label for="save-dex-prof">Dexterity</label>
+                                </div>
+                                <div class="save-item">
+                                    <input type="checkbox" id="save-con-prof" class="save-checkbox">
+                                    <span class="save-modifier" id="save-con">+0</span>
+                                    <label for="save-con-prof">Constitution</label>
+                                </div>
+                                <div class="save-item">
+                                    <input type="checkbox" id="save-int-prof" class="save-checkbox">
+                                    <span class="save-modifier" id="save-int">+0</span>
+                                    <label for="save-int-prof">Intelligence</label>
+                                </div>
+                                <div class="save-item">
+                                    <input type="checkbox" id="save-wis-prof" class="save-checkbox">
+                                    <span class="save-modifier" id="save-wis">+0</span>
+                                    <label for="save-wis-prof">Wisdom</label>
+                                </div>
+                                <div class="save-item">
+                                    <input type="checkbox" id="save-cha-prof" class="save-checkbox">
+                                    <span class="save-modifier" id="save-cha">+0</span>
+                                    <label for="save-cha-prof">Charisma</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Skills -->
+                        <div class="sheet-section">
+                            <h4>🎯 Skills</h4>
+                            <div class="skills-list">
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-acrobatics" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-acrobatics-mod">+0</span>
+                                    <label for="skill-acrobatics">Acrobatics (Dex)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-animal-handling" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-animal-handling-mod">+0</span>
+                                    <label for="skill-animal-handling">Animal Handling (Wis)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-arcana" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-arcana-mod">+0</span>
+                                    <label for="skill-arcana">Arcana (Int)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-athletics" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-athletics-mod">+0</span>
+                                    <label for="skill-athletics">Athletics (Str)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-deception" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-deception-mod">+0</span>
+                                    <label for="skill-deception">Deception (Cha)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-history" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-history-mod">+0</span>
+                                    <label for="skill-history">History (Int)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-insight" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-insight-mod">+0</span>
+                                    <label for="skill-insight">Insight (Wis)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-intimidation" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-intimidation-mod">+0</span>
+                                    <label for="skill-intimidation">Intimidation (Cha)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-investigation" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-investigation-mod">+0</span>
+                                    <label for="skill-investigation">Investigation (Int)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-medicine" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-medicine-mod">+0</span>
+                                    <label for="skill-medicine">Medicine (Wis)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-nature" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-nature-mod">+0</span>
+                                    <label for="skill-nature">Nature (Int)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-perception" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-perception-mod">+0</span>
+                                    <label for="skill-perception">Perception (Wis)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-performance" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-performance-mod">+0</span>
+                                    <label for="skill-performance">Performance (Cha)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-persuasion" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-persuasion-mod">+0</span>
+                                    <label for="skill-persuasion">Persuasion (Cha)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-religion" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-religion-mod">+0</span>
+                                    <label for="skill-religion">Religion (Int)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-sleight-of-hand" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-sleight-of-hand-mod">+0</span>
+                                    <label for="skill-sleight-of-hand">Sleight of Hand (Dex)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-stealth" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-stealth-mod">+0</span>
+                                    <label for="skill-stealth">Stealth (Dex)</label>
+                                </div>
+                                <div class="skill-item">
+                                    <input type="checkbox" id="skill-survival" class="skill-checkbox">
+                                    <span class="skill-modifier" id="skill-survival-mod">+0</span>
+                                    <label for="skill-survival">Survival (Wis)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Center Column -->
+                    <div class="sheet-center">
+                        <!-- Combat Stats -->
+                        <div class="combat-stats">
+                            <div class="combat-row">
+                                <div class="combat-stat">
+                                    <label>Armor Class</label>
+                                    <div class="combat-value">
+                                        <input type="number" id="sheet-ac" class="combat-input" min="1" value="10">
+                                    </div>
+                                </div>
+                                <div class="combat-stat">
+                                    <label>Initiative</label>
+                                    <div class="combat-value">
+                                        <input type="number" id="sheet-initiative" class="combat-input" value="0">
+                                    </div>
+                                </div>
+                                <div class="combat-stat">
+                                    <label>Speed</label>
+                                    <div class="combat-value">
+                                        <input type="number" id="sheet-speed" class="combat-input" min="0" value="30">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hit Points -->
+                        <div class="hit-points">
+                            <h4>❤️ Hit Points</h4>
+                            <div class="hp-section">
+                                <div class="hp-max">
+                                    <label>Hit Point Maximum</label>
+                                    <input type="number" id="sheet-hp-max" class="hp-input" min="1" value="10">
+                                </div>
+                                <div class="hp-current">
+                                    <label>Current Hit Points</label>
+                                    <input type="number" id="sheet-hp-current" class="hp-input large" min="0" value="10">
+                                </div>
+                                <div class="hp-temp">
+                                    <label>Temporary Hit Points</label>
+                                    <input type="number" id="sheet-hp-temp" class="hp-input" min="0" value="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hit Dice & Death Saves -->
+                        <div class="sheet-row">
+                            <div class="hit-dice">
+                                <h4>🎲 Hit Dice</h4>
+                                <div class="hit-dice-section">
+                                    <input type="text" id="sheet-hit-dice" class="sheet-input" placeholder="1d10">
+                                </div>
+                            </div>
+                            <div class="death-saves">
+                                <h4>💀 Death Saves</h4>
+                                <div class="death-saves-section">
+                                    <div class="saves-row">
+                                        <label>Successes</label>
+                                        <div class="death-checkboxes">
+                                            <input type="checkbox" id="death-success-1" class="death-checkbox">
+                                            <input type="checkbox" id="death-success-2" class="death-checkbox">
+                                            <input type="checkbox" id="death-success-3" class="death-checkbox">
+                                        </div>
+                                    </div>
+                                    <div class="saves-row">
+                                        <label>Failures</label>
+                                        <div class="death-checkboxes">
+                                            <input type="checkbox" id="death-failure-1" class="death-checkbox">
+                                            <input type="checkbox" id="death-failure-2" class="death-checkbox">
+                                            <input type="checkbox" id="death-failure-3" class="death-checkbox">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attacks & Spellcasting -->
+                        <div class="attacks-section">
+                            <h4>⚔️ Attacks & Spellcasting</h4>
+                            <textarea id="sheet-attacks" class="sheet-textarea" rows="8" placeholder="Weapon attacks, spell attack bonuses, damage, etc."></textarea>
+                        </div>
+
+                        <!-- Equipment -->
+                        <div class="equipment-section">
+                            <h4>🎒 Equipment</h4>
+                            <textarea id="sheet-equipment" class="sheet-textarea" rows="6" placeholder="Weapons, armor, adventuring gear, treasure, etc."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="sheet-right">
+                        <!-- Other Proficiencies & Languages -->
+                        <div class="sheet-section">
+                            <h4>🗣️ Languages & Proficiencies</h4>
+                            <textarea id="sheet-languages" class="sheet-textarea" rows="4" placeholder="Languages, tool proficiencies, weapon proficiencies, etc."></textarea>
+                        </div>
+
+                        <!-- Features & Traits -->
+                        <div class="sheet-section">
+                            <h4>✨ Features & Traits</h4>
+                            <textarea id="sheet-features" class="sheet-textarea" rows="8" placeholder="Racial traits, class features, feats, etc."></textarea>
+                        </div>
+
+                        <!-- Character Traits -->
+                        <div class="character-traits">
+                            <div class="trait-section">
+                                <h4>🎭 Personality Traits</h4>
+                                <textarea id="sheet-personality" class="sheet-textarea" rows="3" placeholder="Describe your character's personality..."></textarea>
+                            </div>
+                            <div class="trait-section">
+                                <h4>💡 Ideals</h4>
+                                <textarea id="sheet-ideals" class="sheet-textarea" rows="3" placeholder="What drives your character?"></textarea>
+                            </div>
+                            <div class="trait-section">
+                                <h4>🔗 Bonds</h4>
+                                <textarea id="sheet-bonds" class="sheet-textarea" rows="3" placeholder="Important people, places, or things..."></textarea>
+                            </div>
+                            <div class="trait-section">
+                                <h4>❌ Flaws</h4>
+                                <textarea id="sheet-flaws" class="sheet-textarea" rows="3" placeholder="Character weaknesses or vices..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" id="cancel-character-sheet" class="btn btn-secondary">Cancel</button>
+            <button type="button" id="save-character-sheet" class="btn btn-primary">💾 Save Character</button>
+        </div>
+    </div>
+</div>
+
+<!-- Updated Characters Grid with View Sheet buttons -->
+<script>
+// Update the createCharacterCard function to include View Sheet and Delete buttons
+function createCharacterCard(character) {
+    const div = document.createElement('div');
+    div.className = 'character-card';
+    
+    // Parse status effects if they exist
+    let statusEffects = [];
+    try {
+        statusEffects = character.status_effects ? JSON.parse(character.status_effects) : [];
+    } catch (e) {
+        statusEffects = [];
+    }
+    
+    const statusEffectsHtml = statusEffects.length > 0 ? 
+        `<div class="status-effects">Status: ${statusEffects.join(', ')}</div>` : '';
+    
+    // Check if user can delete this character
+    const canDelete = currentUser.role === 'dm' || character.user_id === currentUser.id;
+    
+    div.innerHTML = `
+        <div class="character-header">
+            <div>
+                <div class="character-name">${character.name}</div>
+                <div class="character-class">${character.class || 'Unknown Class'} - Level ${character.level}</div>
+                ${character.username ? `<div class="character-player">Player: ${character.username}</div>` : ''}
+            </div>
+        </div>
+        
+        <div class="character-stats">
+            <div class="stat-item">
+                <span class="stat-label">HP</span>
+                <span class="stat-value hp-tracker" data-char-id="${character.id}">
+                    <input type="number" class="hp-input" value="${character.hp_current}" min="0" max="${character.hp_max}" data-char-id="${character.id}">
+                    /${character.hp_max}
+                </span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">AC</span>
+                <span class="stat-value">${character.ac}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Speed</span>
+                <span class="stat-value">${character.speed || 30}ft</span>
+            </div>
+        </div>
+        
+        ${statusEffectsHtml}
+        
+        ${character.notes ? `<div class="character-notes">${character.notes}</div>` : ''}
+        
+        <div class="character-controls">
+            <button class="btn btn-small btn-primary" onclick="openCharacterSheet(${character.id})">📋 View Sheet</button>
+            <button class="btn btn-small btn-secondary" onclick="editCharacter(${character.id})">✏️ Quick Edit</button>
+            ${canDelete ? `<button class="btn btn-small btn-danger" onclick="deleteCharacter(${character.id}, '${character.name}')">🗑️ Delete</button>` : ''}
+            ${character.in_combat ? '<span class="combat-indicator">⚔️ In Combat</span>' : ''}
+        </div>
+    `;
+    
+    // Add HP change listeners
+    const hpInput = div.querySelector('.hp-input');
+    hpInput.addEventListener('change', (e) => {
+        updateCharacterHP(character.id, parseInt(e.target.value));
+    });
+    
+    return div;
+}
+</script>
 
                 <!-- Campaign Tab -->
                 <div id="campaign-tab" class="tab-content">
