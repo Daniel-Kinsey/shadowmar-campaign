@@ -482,6 +482,73 @@ def handle_dice_roll(data):
         'timestamp': datetime.now().isoformat()
     }, room='campaign')
 
+# Campaign Book/Vault routes
+@app.route('/api/dm/book/<section>')
+def get_dm_book_section(section):
+    """Get DM book section content"""
+    # Check if user is logged in and is DM
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    if session.get('role') != 'dm':
+        return jsonify({'error': 'DM privileges required'}), 403
+    
+    try:
+        # Define the comprehensive DM book content
+        book_content = {
+            'overview': {
+                'title': 'World Overview: Shadowmar',
+                'content': '''
+                <h2>The Chronicles of Shadowmar Campaign</h2>
+                <p><strong>Core Concept:</strong> A world shrouded in perpetual twilight, where the sun and moon are rarely seen, and the stars shine with an eerie intensity.</p>
+                
+                <h3>Campaign Summary</h3>
+                <ul>
+                    <li><strong>Theme:</strong> Pirate adventure in a twilight world</li>
+                    <li><strong>Current Objective:</strong> Journey to the Drowned City (Xylos)</li>
+                    <li><strong>Party Status:</strong> Heroes of Ironwood Isle</li>
+                    <li><strong>Ship:</strong> The Shadowchaser II (upgraded vessel)</li>
+                    <li><strong>Treasure:</strong> 5,000 gp starting funds</li>
+                </ul>
+
+                <h3>The Four Weavers of Shadowmar</h3>
+                <p>From the primordial Void emerged four powerful beings who shaped this world:</p>
+                <ul>
+                    <li><strong>The Weaver of Stars:</strong> Spun threads of light, creating celestial bodies</li>
+                    <li><strong>The Weaver of Worlds:</strong> Forged the physical lands with hidden secrets</li>
+                    <li><strong>The Weaver of Life:</strong> Breathed life into all creatures</li>
+                    <li><strong>The Weaver of Dreams:</strong> Wove dreams and visions, guiding souls</li>
+                </ul>
+                '''
+            },
+            'sessions': {
+                'title': 'Session Archive',
+                'content': '''
+                <h2>Session 1: The Storm's Fury</h2>
+                <p><strong>Status:</strong> ✅ Completed</p>
+                
+                <h3>The Crisis</h3>
+                <p>Ghost ships appeared on the horizon near Ironwood Isle, followed by a devastating tidal wave threatening Dawnhaven harbor.</p>
+                
+                <h3>Resolution & Rewards</h3>
+                <ul>
+                    <li>✅ Storm Shard destroyed</li>
+                    <li>✅ Ironwood Isle saved</li>
+                    <li>💰 5,000 gp reward</li>
+                    <li>🚢 Larger ship acquired</li>
+                    <li>🗺️ Treasure map to Drowned City found</li>
+                </ul>
+                '''
+            }
+        }
+        
+        if section not in book_content:
+            return jsonify({'error': 'Section not found'}), 404
+            
+        return jsonify(book_content[section])
+    except Exception as error:
+        return jsonify({'error': 'Failed to load book section'}), 500
+
 if __name__ == '__main__':
     init_db()
     # Use port from environment variable or default to 5000
