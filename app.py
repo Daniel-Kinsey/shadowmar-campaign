@@ -36,11 +36,64 @@ battle_map_state = {
     'grid_size': 50,
     'tokens': {},
     'fog_of_war': {},
-    'background_image': None
+    'background_image': None,
+    'walls': [],
+    'lighting': {},
+    'showGrid': True
 }
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def update_character_schema():
+    """Update characters table with full D&D character sheet fields"""
+    conn = sqlite3.connect('shadowmar.db')
+    cursor = conn.cursor()
+    
+    # Add new columns for full character sheet
+    new_columns = [
+        ('race', 'TEXT DEFAULT ""'),
+        ('background', 'TEXT DEFAULT ""'),
+        ('alignment', 'TEXT DEFAULT ""'),
+        ('strength', 'INTEGER DEFAULT 10'),
+        ('dexterity', 'INTEGER DEFAULT 10'),
+        ('constitution', 'INTEGER DEFAULT 10'),
+        ('intelligence', 'INTEGER DEFAULT 10'),
+        ('wisdom', 'INTEGER DEFAULT 10'),
+        ('charisma', 'INTEGER DEFAULT 10'),
+        ('proficiency_bonus', 'INTEGER DEFAULT 2'),
+        ('inspiration', 'INTEGER DEFAULT 0'),
+        ('skills', 'TEXT DEFAULT "{}"'),
+        ('saving_throws', 'TEXT DEFAULT "{}"'),
+        ('languages', 'TEXT DEFAULT ""'),
+        ('proficiencies', 'TEXT DEFAULT ""'),
+        ('equipment', 'TEXT DEFAULT ""'),
+        ('features_traits', 'TEXT DEFAULT ""'),
+        ('attacks_spells', 'TEXT DEFAULT ""'),
+        ('personality_traits', 'TEXT DEFAULT ""'),
+        ('ideals', 'TEXT DEFAULT ""'),
+        ('bonds', 'TEXT DEFAULT ""'),
+        ('flaws', 'TEXT DEFAULT ""'),
+        ('speed', 'INTEGER DEFAULT 30'),
+        ('token_x', 'INTEGER DEFAULT 0'),
+        ('token_y', 'INTEGER DEFAULT 0'),
+        ('initiative', 'INTEGER DEFAULT 0'),
+        ('in_combat', 'BOOLEAN DEFAULT FALSE'),
+        ('status_effects', 'TEXT DEFAULT "[]"'),
+        ('spell_slots', 'TEXT DEFAULT "{}"')
+    ]
+    
+    for column_name, column_def in new_columns:
+        try:
+            cursor.execute(f'ALTER TABLE characters ADD COLUMN {column_name} {column_def}')
+            print(f"Added column: {column_name}")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" not in str(e):
+                print(f"Error adding column {column_name}: {e}")
+    
+    conn.commit()
+    conn.close()
+    print("✅ Character schema updated!")
 
 def init_db():
     conn = sqlite3.connect('shadowmar.db')
@@ -57,20 +110,49 @@ def init_db():
         )
     ''')
     
-    # Characters table
+    # Enhanced Characters table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS characters (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             name TEXT NOT NULL,
-            class TEXT,
+            class TEXT DEFAULT "",
+            race TEXT DEFAULT "",
+            background TEXT DEFAULT "",
             level INTEGER DEFAULT 1,
+            alignment TEXT DEFAULT "",
             hp_current INTEGER DEFAULT 10,
             hp_max INTEGER DEFAULT 10,
             ac INTEGER DEFAULT 10,
-            stats TEXT,
-            notes TEXT,
+            speed INTEGER DEFAULT 30,
+            initiative INTEGER DEFAULT 0,
+            strength INTEGER DEFAULT 10,
+            dexterity INTEGER DEFAULT 10,
+            constitution INTEGER DEFAULT 10,
+            intelligence INTEGER DEFAULT 10,
+            wisdom INTEGER DEFAULT 10,
+            charisma INTEGER DEFAULT 10,
+            proficiency_bonus INTEGER DEFAULT 2,
+            inspiration INTEGER DEFAULT 0,
+            skills TEXT DEFAULT "{}",
+            saving_throws TEXT DEFAULT "{}",
+            languages TEXT DEFAULT "",
+            proficiencies TEXT DEFAULT "",
+            equipment TEXT DEFAULT "",
+            features_traits TEXT DEFAULT "",
+            attacks_spells TEXT DEFAULT "",
+            personality_traits TEXT DEFAULT "",
+            ideals TEXT DEFAULT "",
+            bonds TEXT DEFAULT "",
+            flaws TEXT DEFAULT "",
+            stats TEXT DEFAULT "{}",
+            notes TEXT DEFAULT "",
             image_url TEXT,
+            token_x INTEGER DEFAULT 0,
+            token_y INTEGER DEFAULT 0,
+            in_combat BOOLEAN DEFAULT FALSE,
+            status_effects TEXT DEFAULT "[]",
+            spell_slots TEXT DEFAULT "{}",
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
@@ -98,6 +180,18 @@ def init_db():
         )
     ''')
     
+    # Secret messages table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS secret_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender TEXT NOT NULL,
+            recipient TEXT NOT NULL,
+            message TEXT NOT NULL,
+            read_status BOOLEAN DEFAULT FALSE,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
     # Files table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS files (
@@ -107,6 +201,28 @@ def init_db():
             uploaded_by TEXT NOT NULL,
             file_type TEXT,
             upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # DM Book content table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS dm_book (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            section TEXT UNIQUE NOT NULL,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            updated_by TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Battle map state table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS battle_map (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            map_data TEXT NOT NULL,
+            updated_by TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     
@@ -155,6 +271,9 @@ def init_db():
     
     conn.commit()
     conn.close()
+    
+    # Update character schema for existing databases
+    update_character_schema()
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -169,6 +288,13 @@ def index():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('index.html')
+
+@app.route('/battlemap')
+def battlemap():
+    """Separate window for battle map display"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('battlemap.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -220,6 +346,7 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+# Enhanced Character API endpoints
 @app.route('/api/characters')
 def get_characters():
     if 'user_id' not in session:
@@ -248,18 +375,53 @@ def create_character():
     conn = get_db_connection()
     cursor = conn.cursor()
     
+    # Enhanced character creation with all fields
     cursor.execute('''
-        INSERT INTO characters (user_id, name, class, level, hp_current, hp_max, ac, stats, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO characters (
+            user_id, name, class, race, background, level, alignment,
+            hp_current, hp_max, ac, speed, initiative,
+            strength, dexterity, constitution, intelligence, wisdom, charisma,
+            proficiency_bonus, inspiration, 
+            skills, saving_throws, languages, proficiencies,
+            equipment, features_traits, attacks_spells,
+            personality_traits, ideals, bonds, flaws,
+            stats, spell_slots, status_effects, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         session['user_id'],
         data.get('name', ''),
         data.get('class', ''),
+        data.get('race', ''),
+        data.get('background', ''),
         data.get('level', 1),
+        data.get('alignment', ''),
         data.get('hp_current', 10),
         data.get('hp_max', 10),
         data.get('ac', 10),
+        data.get('speed', 30),
+        data.get('initiative', 0),
+        data.get('strength', 10),
+        data.get('dexterity', 10),
+        data.get('constitution', 10),
+        data.get('intelligence', 10),
+        data.get('wisdom', 10),
+        data.get('charisma', 10),
+        data.get('proficiency_bonus', 2),
+        data.get('inspiration', 0),
+        json.dumps(data.get('skills', {})),
+        json.dumps(data.get('saving_throws', {})),
+        data.get('languages', ''),
+        data.get('proficiencies', ''),
+        data.get('equipment', ''),
+        data.get('features_traits', ''),
+        data.get('attacks_spells', ''),
+        data.get('personality_traits', ''),
+        data.get('ideals', ''),
+        data.get('bonds', ''),
+        data.get('flaws', ''),
         json.dumps(data.get('stats', {})),
+        json.dumps(data.get('spell_slots', {})),
+        json.dumps(data.get('status_effects', [])),
         data.get('notes', '')
     ))
     
@@ -288,19 +450,50 @@ def update_character(char_id):
         conn.close()
         return jsonify({'error': 'Permission denied'}), 403
     
-    # Update character
+    # Update character with all fields
     conn.execute('''
         UPDATE characters 
-        SET name=?, class=?, level=?, hp_current=?, hp_max=?, ac=?, stats=?, notes=?
+        SET name=?, class=?, race=?, background=?, level=?, alignment=?,
+            hp_current=?, hp_max=?, ac=?, speed=?, initiative=?,
+            strength=?, dexterity=?, constitution=?, intelligence=?, wisdom=?, charisma=?,
+            proficiency_bonus=?, inspiration=?, skills=?, saving_throws=?,
+            languages=?, proficiencies=?, equipment=?, features_traits=?, attacks_spells=?,
+            personality_traits=?, ideals=?, bonds=?, flaws=?, stats=?, spell_slots=?, status_effects=?, notes=?
         WHERE id=?
     ''', (
         data.get('name', ''),
         data.get('class', ''),
+        data.get('race', ''),
+        data.get('background', ''),
         data.get('level', 1),
+        data.get('alignment', ''),
         data.get('hp_current', 10),
         data.get('hp_max', 10),
         data.get('ac', 10),
+        data.get('speed', 30),
+        data.get('initiative', 0),
+        data.get('strength', 10),
+        data.get('dexterity', 10),
+        data.get('constitution', 10),
+        data.get('intelligence', 10),
+        data.get('wisdom', 10),
+        data.get('charisma', 10),
+        data.get('proficiency_bonus', 2),
+        data.get('inspiration', 0),
+        json.dumps(data.get('skills', {})),
+        json.dumps(data.get('saving_throws', {})),
+        data.get('languages', ''),
+        data.get('proficiencies', ''),
+        data.get('equipment', ''),
+        data.get('features_traits', ''),
+        data.get('attacks_spells', ''),
+        data.get('personality_traits', ''),
+        data.get('ideals', ''),
+        data.get('bonds', ''),
+        data.get('flaws', ''),
         json.dumps(data.get('stats', {})),
+        json.dumps(data.get('spell_slots', {})),
+        json.dumps(data.get('status_effects', [])),
         data.get('notes', ''),
         char_id
     ))
@@ -311,195 +504,82 @@ def update_character(char_id):
     socketio.emit('character_update', {
         'action': 'update', 
         'character_id': char_id,
-        'updated_by': session['username']
+        'updated_by': session['username'],
+        'data': data
     }, room='campaign')
     
     return jsonify({'success': True})
 
-@app.route('/api/campaign')
-def get_campaign_data():
+@app.route('/api/characters/<int:char_id>', methods=['DELETE'])
+def delete_character(char_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     conn = get_db_connection()
-    data = conn.execute('SELECT * FROM campaign_data').fetchall()
-    conn.close()
     
-    campaign_data = {}
-    for row in data:
-        try:
-            campaign_data[row['key']] = json.loads(row['value'])
-        except:
-            campaign_data[row['key']] = row['value']
+    # Check if user owns character or is DM
+    character = conn.execute(
+        'SELECT user_id, name FROM characters WHERE id = ?', (char_id,)
+    ).fetchone()
     
-    return jsonify(campaign_data)
-
-@app.route('/api/campaign/<key>', methods=['PUT'])
-def update_campaign_data(key):
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
+    if not character:
+        conn.close()
+        return jsonify({'error': 'Character not found'}), 404
     
-    data = request.get_json()
-    value = json.dumps(data.get('value'))
+    if character['user_id'] != session['user_id'] and session['role'] != 'dm':
+        conn.close()
+        return jsonify({'error': 'Permission denied'}), 403
     
-    conn = get_db_connection()
-    conn.execute('''
-        INSERT OR REPLACE INTO campaign_data (key, value, updated_by)
-        VALUES (?, ?, ?)
-    ''', (key, value, session['username']))
+    # Delete the character
+    conn.execute('DELETE FROM characters WHERE id = ?', (char_id,))
     conn.commit()
     conn.close()
     
-    socketio.emit('campaign_update', {
-        'key': key,
-        'value': data.get('value'),
-        'updated_by': session['username']
+    socketio.emit('character_update', {
+        'action': 'delete', 
+        'character_id': char_id,
+        'character_name': character['name'],
+        'deleted_by': session['username']
     }, room='campaign')
     
     return jsonify({'success': True})
 
-@app.route('/api/messages')
-def get_messages():
+@app.route('/api/characters/<int:char_id>/sheet')
+def get_character_sheet(char_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     conn = get_db_connection()
-    messages = conn.execute(
-        'SELECT * FROM messages ORDER BY timestamp DESC LIMIT 100'
-    ).fetchall()
+    character = conn.execute(
+        'SELECT c.*, u.username FROM characters c JOIN users u ON c.user_id = u.id WHERE c.id = ?', 
+        (char_id,)
+    ).fetchone()
     conn.close()
     
-    return jsonify([dict(msg) for msg in reversed(messages)])
-
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
+    if not character:
+        return jsonify({'error': 'Character not found'}), 404
     
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
+    # Check permissions (owner or DM)
+    if character['user_id'] != session['user_id'] and session['role'] != 'dm':
+        return jsonify({'error': 'Permission denied'}), 403
     
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
+    # Convert to dict and parse JSON fields
+    char_data = dict(character)
+    try:
+        char_data['skills'] = json.loads(character['skills']) if character['skills'] else {}
+        char_data['saving_throws'] = json.loads(character['saving_throws']) if character['saving_throws'] else {}
+        char_data['spell_slots'] = json.loads(character['spell_slots']) if character['spell_slots'] else {}
+        char_data['status_effects'] = json.loads(character['status_effects']) if character['status_effects'] else []
+        char_data['stats'] = json.loads(character['stats']) if character['stats'] else {}
+    except:
+        # Handle malformed JSON
+        char_data['skills'] = {}
+        char_data['saving_throws'] = {}
+        char_data['spell_slots'] = {}
+        char_data['status_effects'] = []
+        char_data['stats'] = {}
     
-    if file and allowed_file(file.filename):
-        filename = str(uuid.uuid4()) + '_' + secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-        
-        conn = get_db_connection()
-        conn.execute('''
-            INSERT INTO files (filename, original_name, uploaded_by, file_type)
-            VALUES (?, ?, ?, ?)
-        ''', (
-            filename,
-            file.filename,
-            session['username'],
-            file.filename.rsplit('.', 1)[1].lower()
-        ))
-        conn.commit()
-        conn.close()
-        
-        socketio.emit('file_uploaded', {
-            'filename': filename,
-            'original_name': file.filename,
-            'uploaded_by': session['username']
-        }, room='campaign')
-        
-        return jsonify({'success': True, 'filename': filename})
-    
-    return jsonify({'error': 'Invalid file type'}), 400
-
-@app.route('/files/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-@app.route('/api/files')
-def get_files():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    conn = get_db_connection()
-    files = conn.execute(
-        'SELECT * FROM files ORDER BY upload_date DESC'
-    ).fetchall()
-    conn.close()
-    
-    return jsonify([dict(file) for file in files])
-
-# Socket.IO events
-@socketio.on('connect')
-def on_connect():
-    if 'username' in session:
-        join_room('campaign')
-        emit('status', {'msg': f"{session['username']} connected"}, room='campaign')
-
-@socketio.on('disconnect')
-def on_disconnect():
-    if 'username' in session:
-        leave_room('campaign')
-
-@socketio.on('send_message')
-def handle_message(data):
-    if 'username' not in session:
-        return
-    
-    message = data.get('message', '').strip()
-    message_type = data.get('type', 'chat')
-    
-    if message:
-        conn = get_db_connection()
-        conn.execute(
-            'INSERT INTO messages (username, message, message_type) VALUES (?, ?, ?)',
-            (session['username'], message, message_type)
-        )
-        conn.commit()
-        conn.close()
-        
-        emit('new_message', {
-            'username': session['username'],
-            'message': message,
-            'type': message_type,
-            'timestamp': datetime.now().isoformat()
-        }, room='campaign')
-
-@socketio.on('dice_roll')
-def handle_dice_roll(data):
-    if 'username' not in session:
-        return
-    
-    dice = data.get('dice', 'd20')
-    modifier = data.get('modifier', 0)
-    reason = data.get('reason', '')
-    
-    import random
-    
-    # Parse dice notation (e.g., "2d6", "d20")
-    if 'd' in dice:
-        parts = dice.split('d')
-        num_dice = int(parts[0]) if parts[0] else 1
-        die_size = int(parts[1])
-    else:
-        num_dice = 1
-        die_size = int(dice)
-    
-    rolls = [random.randint(1, die_size) for _ in range(num_dice)]
-    total = sum(rolls) + modifier
-    
-    roll_text = f"🎲 {session['username']} rolled {dice}"
-    if modifier != 0:
-        roll_text += f" {'+' if modifier > 0 else ''}{modifier}"
-    if reason:
-        roll_text += f" for {reason}"
-    roll_text += f": {rolls} = **{total}**"
-    
-    emit('new_message', {
-        'username': 'System',
-        'message': roll_text,
-        'type': 'roll',
-        'timestamp': datetime.now().isoformat()
-    }, room='campaign')
+    return jsonify(char_data)
 
 # Combat API endpoints
 @app.route('/api/combat/state')
@@ -507,14 +587,6 @@ def get_combat_state():
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
-    # Return default combat state for now
-    combat_state = {
-        'active': False,
-        'round': 1,
-        'current_turn': 0,
-        'combatants': [],
-        'initiative_order': []
-    }
     return jsonify(combat_state)
 
 @app.route('/api/combat/start', methods=['POST'])
@@ -525,6 +597,7 @@ def start_combat():
     data = request.get_json()
     combatants = data.get('combatants', [])
     
+    global combat_state
     combat_state = {
         'active': True,
         'round': 1,
@@ -532,6 +605,17 @@ def start_combat():
         'combatants': sorted(combatants, key=lambda x: x.get('initiative', 0), reverse=True),
         'initiative_order': [c['id'] for c in sorted(combatants, key=lambda x: x.get('initiative', 0), reverse=True)]
     }
+    
+    # Update characters in combat status
+    conn = get_db_connection()
+    for combatant in combatants:
+        if combatant.get('type') == 'character':
+            conn.execute(
+                'UPDATE characters SET in_combat = ?, initiative = ? WHERE id = ?',
+                (True, combatant.get('initiative', 0), combatant['id'])
+            )
+    conn.commit()
+    conn.close()
     
     socketio.emit('combat_started', combat_state, room='campaign')
     return jsonify({'success': True, 'combat_state': combat_state})
@@ -541,6 +625,21 @@ def end_combat():
     if 'user_id' not in session or session.get('role') != 'dm':
         return jsonify({'error': 'Not authorized'}), 403
     
+    global combat_state
+    combat_state = {
+        'active': False,
+        'round': 1,
+        'current_turn': 0,
+        'combatants': [],
+        'initiative_order': []
+    }
+    
+    # Update characters out of combat
+    conn = get_db_connection()
+    conn.execute('UPDATE characters SET in_combat = ? WHERE in_combat = ?', (False, True))
+    conn.commit()
+    conn.close()
+    
     socketio.emit('combat_ended', room='campaign')
     return jsonify({'success': True})
 
@@ -549,9 +648,14 @@ def next_turn():
     if 'user_id' not in session or session.get('role') != 'dm':
         return jsonify({'error': 'Not authorized'}), 403
     
-    # Basic next turn logic
-    socketio.emit('combat_turn_changed', {'round': 1, 'current_turn': 0}, room='campaign')
-    return jsonify({'success': True})
+    global combat_state
+    if combat_state['active']:
+        combat_state['current_turn'] = (combat_state['current_turn'] + 1) % len(combat_state['combatants'])
+        if combat_state['current_turn'] == 0:
+            combat_state['round'] += 1
+    
+    socketio.emit('combat_turn_changed', combat_state, room='campaign')
+    return jsonify({'success': True, 'combat_state': combat_state})
 
 @app.route('/api/combat/update-hp', methods=['POST'])
 def update_combat_hp():
@@ -562,22 +666,83 @@ def update_combat_hp():
     char_id = data.get('character_id')
     new_hp = data.get('hp')
     
-    try:
-        # Update character HP in database
-        conn = get_db_connection()
-        conn.execute('UPDATE characters SET hp_current = ? WHERE id = ?', (new_hp, char_id))
-        conn.commit()
+    # Check permissions
+    conn = get_db_connection()
+    character = conn.execute(
+        'SELECT user_id FROM characters WHERE id = ?', (char_id,)
+    ).fetchone()
+    
+    if not character or (character['user_id'] != session['user_id'] and session['role'] != 'dm'):
         conn.close()
-        
-        socketio.emit('hp_updated', {
-            'character_id': char_id,
-            'hp': new_hp,
-            'updated_by': session['username']
-        }, room='campaign')
-        
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Permission denied'}), 403
+    
+    # Update HP
+    conn.execute(
+        'UPDATE characters SET hp_current = ? WHERE id = ?',
+        (new_hp, char_id)
+    )
+    conn.commit()
+    conn.close()
+    
+    socketio.emit('hp_updated', {
+        'character_id': char_id,
+        'hp': new_hp,
+        'updated_by': session['username']
+    }, room='campaign')
+    
+    return jsonify({'success': True})
+
+# Battle Map API endpoints
+@app.route('/api/battlemap/state')
+def get_battlemap_state():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    return jsonify(battle_map_state)
+
+@app.route('/api/battlemap/move-token', methods=['POST'])
+def move_token():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    data = request.get_json()
+    token_id = data.get('token_id')
+    x = data.get('x')
+    y = data.get('y')
+    
+    # Check if user can move this token (own character or DM)
+    can_move = session['role'] == 'dm'
+    if not can_move:
+        conn = get_db_connection()
+        character = conn.execute(
+            'SELECT user_id FROM characters WHERE id = ?', (token_id,)
+        ).fetchone()
+        can_move = character and character['user_id'] == session['user_id']
+        conn.close()
+    
+    if not can_move:
+        return jsonify({'error': 'Permission denied'}), 403
+    
+    # Update token position
+    battle_map_state['tokens'][str(token_id)] = {'x': x, 'y': y}
+    
+    # Update character position in database
+    conn = get_db_connection()
+    conn.execute(
+        'UPDATE characters SET token_x = ?, token_y = ? WHERE id = ?',
+        (x, y, token_id)
+    )
+    conn.commit()
+    conn.close()
+    
+    socketio.emit('token_moved', {
+        'token_id': token_id,
+        'x': x,
+        'y': y,
+        'moved_by': session['username']
+    }, room='campaign')
+    
+    return jsonify({'success': True})
 
 # DM Book API endpoints
 @app.route('/api/dm/book/<section>')
@@ -814,60 +979,6 @@ def update_dm_book_section(section):
     
     return jsonify({'success': True})
 
-# Battle Map routes
-@app.route('/battlemap')
-def battlemap():
-    """Separate window for battle map display"""
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('battlemap.html')
-
-@app.route('/api/battlemap/state')
-def get_battlemap_state():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    battle_map_state = {
-        'width': 30,
-        'height': 20,
-        'grid_size': 50,
-        'tokens': {},
-        'fog_of_war': {},
-        'background_image': None,
-        'walls': [],
-        'lighting': {},
-        'showGrid': True
-    }
-    return jsonify(battle_map_state)
-
-@app.route('/api/battlemap/move-token', methods=['POST'])
-def move_token():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    data = request.get_json()
-    token_id = data.get('token_id')
-    x = data.get('x')
-    y = data.get('y')
-    
-    try:
-        # Update character position in database
-        conn = get_db_connection()
-        conn.execute('UPDATE characters SET token_x = ?, token_y = ? WHERE id = ?', (x, y, token_id))
-        conn.commit()
-        conn.close()
-        
-        socketio.emit('token_moved', {
-            'token_id': token_id,
-            'x': x,
-            'y': y,
-            'moved_by': session['username']
-        }, room='campaign')
-        
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 # Secret Messages API
 @app.route('/api/secret-message', methods=['POST'])
 def send_secret_message():
@@ -898,219 +1009,204 @@ def get_secret_messages():
     # Return empty list for now (you can add database storage later)
     return jsonify([])
 
-# Add these socket events to your existing socket handlers
+# Campaign data endpoints
+@app.route('/api/campaign')
+def get_campaign_data():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    conn = get_db_connection()
+    data = conn.execute('SELECT * FROM campaign_data').fetchall()
+    conn.close()
+    
+    campaign_data = {}
+    for row in data:
+        try:
+            campaign_data[row['key']] = json.loads(row['value'])
+        except:
+            campaign_data[row['key']] = row['value']
+    
+    return jsonify(campaign_data)
+
+@app.route('/api/campaign/<key>', methods=['PUT'])
+def update_campaign_data(key):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    data = request.get_json()
+    value = json.dumps(data.get('value'))
+    
+    conn = get_db_connection()
+    conn.execute('''
+        INSERT OR REPLACE INTO campaign_data (key, value, updated_by)
+        VALUES (?, ?, ?)
+    ''', (key, value, session['username']))
+    conn.commit()
+    conn.close()
+    
+    socketio.emit('campaign_update', {
+        'key': key,
+        'value': data.get('value'),
+        'updated_by': session['username']
+    }, room='campaign')
+    
+    return jsonify({'success': True})
+
+@app.route('/api/messages')
+def get_messages():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    conn = get_db_connection()
+    messages = conn.execute(
+        'SELECT * FROM messages ORDER BY timestamp DESC LIMIT 100'
+    ).fetchall()
+    conn.close()
+    
+    return jsonify([dict(msg) for msg in reversed(messages)])
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    if file and allowed_file(file.filename):
+        filename = str(uuid.uuid4()) + '_' + secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO files (filename, original_name, uploaded_by, file_type)
+            VALUES (?, ?, ?, ?)
+        ''', (
+            filename,
+            file.filename,
+            session['username'],
+            file.filename.rsplit('.', 1)[1].lower()
+        ))
+        conn.commit()
+        conn.close()
+        
+        socketio.emit('file_uploaded', {
+            'filename': filename,
+            'original_name': file.filename,
+            'uploaded_by': session['username']
+        }, room='campaign')
+        
+        return jsonify({'success': True, 'filename': filename})
+    
+    return jsonify({'error': 'Invalid file type'}), 400
+
+@app.route('/files/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/api/files')
+def get_files():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    conn = get_db_connection()
+    files = conn.execute(
+        'SELECT * FROM files ORDER BY upload_date DESC'
+    ).fetchall()
+    conn.close()
+    
+    return jsonify([dict(file) for file in files])
+
+# Socket.IO events
+@socketio.on('connect')
+def on_connect():
+    if 'username' in session:
+        join_room('campaign')
+        join_room(f'user_{session["username"]}')
+        emit('status', {'msg': f"{session['username']} connected"}, room='campaign')
+
+@socketio.on('disconnect')
+def on_disconnect():
+    if 'username' in session:
+        leave_room('campaign')
+        leave_room(f'user_{session["username"]}')
+
+@socketio.on('send_message')
+def handle_message(data):
+    if 'username' not in session:
+        return
+    
+    message = data.get('message', '').strip()
+    message_type = data.get('type', 'chat')
+    
+    if message:
+        conn = get_db_connection()
+        conn.execute(
+            'INSERT INTO messages (username, message, message_type) VALUES (?, ?, ?)',
+            (session['username'], message, message_type)
+        )
+        conn.commit()
+        conn.close()
+        
+        emit('new_message', {
+            'username': session['username'],
+            'message': message,
+            'type': message_type,
+            'timestamp': datetime.now().isoformat()
+        }, room='campaign')
+
+@socketio.on('dice_roll')
+def handle_dice_roll(data):
+    if 'username' not in session:
+        return
+    
+    dice = data.get('dice', 'd20')
+    modifier = data.get('modifier', 0)
+    reason = data.get('reason', '')
+    
+    import random
+    
+    # Parse dice notation (e.g., "2d6", "d20")
+    if 'd' in dice:
+        parts = dice.split('d')
+        num_dice = int(parts[0]) if parts[0] else 1
+        die_size = int(parts[1])
+    else:
+        num_dice = 1
+        die_size = int(dice)
+    
+    rolls = [random.randint(1, die_size) for _ in range(num_dice)]
+    total = sum(rolls) + modifier
+    
+    roll_text = f"🎲 {session['username']} rolled {dice}"
+    if modifier != 0:
+        roll_text += f" {'+' if modifier > 0 else ''}{modifier}"
+    if reason:
+        roll_text += f" for {reason}"
+    roll_text += f": {rolls} = **{total}**"
+    
+    emit('new_message', {
+        'username': 'System',
+        'message': roll_text,
+        'type': 'roll',
+        'timestamp': datetime.now().isoformat()
+    }, room='campaign')
+
 @socketio.on('join_battlemap')
 def on_join_battlemap():
     if 'username' in session:
         join_room('battlemap')
-        emit('battlemap_state', {
-            'width': 30,
-            'height': 20,
-            'grid_size': 50,
-            'tokens': {},
-            'showGrid': True
-        })
+        emit('battlemap_state', battle_map_state)
 
 @socketio.on('leave_battlemap')
 def on_leave_battlemap():
     if 'username' in session:
         leave_room('battlemap')
-
-
-# Enhanced character routes with deletion
-@app.route('/api/characters/<int:char_id>', methods=['DELETE'])
-def delete_character(char_id):
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    conn = get_db_connection()
-    
-    # Check if user owns character or is DM
-    character = conn.execute(
-        'SELECT user_id, name FROM characters WHERE id = ?', (char_id,)
-    ).fetchone()
-    
-    if not character:
-        conn.close()
-        return jsonify({'error': 'Character not found'}), 404
-    
-    if character['user_id'] != session['user_id'] and session['role'] != 'dm':
-        conn.close()
-        return jsonify({'error': 'Permission denied'}), 403
-    
-    # Delete the character
-    conn.execute('DELETE FROM characters WHERE id = ?', (char_id,))
-    conn.commit()
-    conn.close()
-    
-    socketio.emit('character_update', {
-        'action': 'delete', 
-        'character_id': char_id,
-        'character_name': character['name'],
-        'deleted_by': session['username']
-    }, room='campaign')
-    
-    return jsonify({'success': True})
-
-# Enhanced character creation with full stats
-@app.route('/api/characters', methods=['POST'])
-def create_character():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    data = request.get_json()
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Create character with full D&D stats
-    cursor.execute('''
-        INSERT INTO characters (
-            user_id, name, class, race, background, level, alignment,
-            hp_current, hp_max, ac, speed, initiative,
-            strength, dexterity, constitution, intelligence, wisdom, charisma,
-            proficiency_bonus, inspiration, 
-            skills, saving_throws, languages, proficiencies,
-            equipment, features_traits, attacks_spells,
-            personality_traits, ideals, bonds, flaws,
-            stats, spell_slots, status_effects, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        session['user_id'],
-        data.get('name', ''),
-        data.get('class', ''),
-        data.get('race', ''),
-        data.get('background', ''),
-        data.get('level', 1),
-        data.get('alignment', ''),
-        data.get('hp_current', 10),
-        data.get('hp_max', 10),
-        data.get('ac', 10),
-        data.get('speed', 30),
-        data.get('initiative', 0),
-        data.get('strength', 10),
-        data.get('dexterity', 10),
-        data.get('constitution', 10),
-        data.get('intelligence', 10),
-        data.get('wisdom', 10),
-        data.get('charisma', 10),
-        data.get('proficiency_bonus', 2),
-        data.get('inspiration', 0),
-        json.dumps(data.get('skills', {})),
-        json.dumps(data.get('saving_throws', {})),
-        data.get('languages', ''),
-        data.get('proficiencies', ''),
-        data.get('equipment', ''),
-        data.get('features_traits', ''),
-        data.get('attacks_spells', ''),
-        data.get('personality_traits', ''),
-        data.get('ideals', ''),
-        data.get('bonds', ''),
-        data.get('flaws', ''),
-        json.dumps(data.get('stats', {})),
-        json.dumps(data.get('spell_slots', {})),
-        json.dumps(data.get('status_effects', [])),
-        data.get('notes', '')
-    ))
-    
-    char_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    
-    socketio.emit('character_update', {'action': 'create', 'character_id': char_id}, room='campaign')
-    
-    return jsonify({'success': True, 'character_id': char_id})
-
-# Get full character sheet data
-@app.route('/api/characters/<int:char_id>/sheet')
-def get_character_sheet(char_id):
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    conn = get_db_connection()
-    character = conn.execute(
-        'SELECT c.*, u.username FROM characters c JOIN users u ON c.user_id = u.id WHERE c.id = ?', 
-        (char_id,)
-    ).fetchone()
-    conn.close()
-    
-    if not character:
-        return jsonify({'error': 'Character not found'}), 404
-    
-    # Check permissions (owner or DM)
-    if character['user_id'] != session['user_id'] and session['role'] != 'dm':
-        return jsonify({'error': 'Permission denied'}), 403
-    
-    # Convert to dict and parse JSON fields
-    char_data = dict(character)
-    try:
-        char_data['skills'] = json.loads(character['skills']) if character['skills'] else {}
-        char_data['saving_throws'] = json.loads(character['saving_throws']) if character['saving_throws'] else {}
-        char_data['spell_slots'] = json.loads(character['spell_slots']) if character['spell_slots'] else {}
-        char_data['status_effects'] = json.loads(character['status_effects']) if character['status_effects'] else []
-        char_data['stats'] = json.loads(character['stats']) if character['stats'] else {}
-    except:
-        # Handle malformed JSON
-        char_data['skills'] = {}
-        char_data['saving_throws'] = {}
-        char_data['spell_slots'] = {}
-        char_data['status_effects'] = []
-        char_data['stats'] = {}
-    
-    return jsonify(char_data)
-
-# Update database schema for full character sheets
-def update_character_schema():
-    """Update characters table with full D&D character sheet fields"""
-    conn = sqlite3.connect('shadowmar.db')
-    cursor = conn.cursor()
-    
-    # Add new columns for full character sheet
-    new_columns = [
-        ('race', 'TEXT DEFAULT ""'),
-        ('background', 'TEXT DEFAULT ""'),
-        ('alignment', 'TEXT DEFAULT ""'),
-        ('strength', 'INTEGER DEFAULT 10'),
-        ('dexterity', 'INTEGER DEFAULT 10'),
-        ('constitution', 'INTEGER DEFAULT 10'),
-        ('intelligence', 'INTEGER DEFAULT 10'),
-        ('wisdom', 'INTEGER DEFAULT 10'),
-        ('charisma', 'INTEGER DEFAULT 10'),
-        ('proficiency_bonus', 'INTEGER DEFAULT 2'),
-        ('inspiration', 'INTEGER DEFAULT 0'),
-        ('skills', 'TEXT DEFAULT "{}"'),
-        ('saving_throws', 'TEXT DEFAULT "{}"'),
-        ('languages', 'TEXT DEFAULT ""'),
-        ('proficiencies', 'TEXT DEFAULT ""'),
-        ('equipment', 'TEXT DEFAULT ""'),
-        ('features_traits', 'TEXT DEFAULT ""'),
-        ('attacks_spells', 'TEXT DEFAULT ""'),
-        ('personality_traits', 'TEXT DEFAULT ""'),
-        ('ideals', 'TEXT DEFAULT ""'),
-        ('bonds', 'TEXT DEFAULT ""'),
-        ('flaws', 'TEXT DEFAULT ""'),
-        ('speed', 'INTEGER DEFAULT 30'),
-        ('token_x', 'INTEGER DEFAULT 0'),
-        ('token_y', 'INTEGER DEFAULT 0'),
-        ('initiative', 'INTEGER DEFAULT 0'),
-        ('in_combat', 'BOOLEAN DEFAULT FALSE'),
-        ('status_effects', 'TEXT DEFAULT "[]"'),
-        ('spell_slots', 'TEXT DEFAULT "{}"')
-    ]
-    
-    for column_name, column_def in new_columns:
-        try:
-            cursor.execute(f'ALTER TABLE characters ADD COLUMN {column_name} {column_def}')
-            print(f"Added column: {column_name}")
-        except sqlite3.OperationalError as e:
-            if "duplicate column name" in str(e):
-                continue  # Column already exists
-            else:
-                print(f"Error adding column {column_name}: {e}")
-    
-    conn.commit()
-    conn.close()
-    print("✅ Character schema updated!")
-
 
 if __name__ == '__main__':
     init_db()
