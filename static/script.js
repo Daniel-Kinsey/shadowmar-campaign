@@ -41,9 +41,17 @@ const skillAbilityMap = {
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
+    const usernameDisplay = document.getElementById('username-display');
+    const roleDisplay = document.getElementById('role-badge');
+    
+    if (!usernameDisplay || !roleDisplay) {
+        console.error('Username or role display elements not found');
+        return;
+    }
+    
     currentUser = {
-        username: document.getElementById('username-display').textContent,
-        role: document.getElementById('role-badge').textContent
+        username: usernameDisplay.textContent,
+        role: roleDisplay.textContent
     };
     
     initializeSocket();
@@ -54,8 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Show DM-only controls if user is DM
     if (currentUser.role === 'dm') {
-        document.getElementById('dm-combat-controls').style.display = 'flex';
-        document.getElementById('dm-book-edit-controls').style.display = 'flex';
+        const dmCombatControls = document.getElementById('dm-combat-controls');
+        const dmBookControls = document.getElementById('dm-book-edit-controls');
+        if (dmCombatControls) dmCombatControls.style.display = 'flex';
+        if (dmBookControls) dmBookControls.style.display = 'flex';
     }
     
     enhanceAddCharacterButton();
@@ -159,26 +169,42 @@ function initializeEventListeners() {
     });
     
     // Logout
-    document.getElementById('logout-btn').addEventListener('click', () => {
-        window.location.href = '/logout';
-    });
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            window.location.href = '/logout';
+        });
+    }
     
     // Character management
-    document.getElementById('save-character').addEventListener('click', saveCharacter);
-    document.getElementById('cancel-character').addEventListener('click', closeCharacterModal);
+    const saveCharBtn = document.getElementById('save-character');
+    const cancelCharBtn = document.getElementById('cancel-character');
+    if (saveCharBtn) saveCharBtn.addEventListener('click', saveCharacter);
+    if (cancelCharBtn) cancelCharBtn.addEventListener('click', closeCharacterModal);
     
     // Combat controls
-    document.getElementById('start-combat-btn').addEventListener('click', openCombatSetup);
-    document.getElementById('end-combat-btn').addEventListener('click', endCombat);
-    document.getElementById('next-turn-btn').addEventListener('click', nextTurn);
-    document.getElementById('confirm-combat-start').addEventListener('click', startCombat);
-    document.getElementById('cancel-combat-setup').addEventListener('click', closeCombatSetup);
-    document.getElementById('add-enemy-btn').addEventListener('click', addEnemyToCombat);
+    const startCombatBtn = document.getElementById('start-combat-btn');
+    const endCombatBtn = document.getElementById('end-combat-btn');
+    const nextTurnBtn = document.getElementById('next-turn-btn');
+    const confirmCombatBtn = document.getElementById('confirm-combat-start');
+    const cancelCombatBtn = document.getElementById('cancel-combat-setup');
+    const addEnemyBtn = document.getElementById('add-enemy-btn');
+    
+    if (startCombatBtn) startCombatBtn.addEventListener('click', openCombatSetup);
+    if (endCombatBtn) endCombatBtn.addEventListener('click', endCombat);
+    if (nextTurnBtn) nextTurnBtn.addEventListener('click', nextTurn);
+    if (confirmCombatBtn) confirmCombatBtn.addEventListener('click', startCombat);
+    if (cancelCombatBtn) cancelCombatBtn.addEventListener('click', closeCombatSetup);
+    if (addEnemyBtn) addEnemyBtn.addEventListener('click', addEnemyToCombat);
     
     // Battle map controls
-    document.getElementById('open-battlemap-window').addEventListener('click', openBattleMapWindow);
-    document.getElementById('toggle-grid').addEventListener('click', toggleGrid);
-    document.getElementById('center-map').addEventListener('click', centerMap);
+    const openBattlemapBtn = document.getElementById('open-battlemap-window');
+    const toggleGridBtn = document.getElementById('toggle-grid');
+    const centerMapBtn = document.getElementById('center-map');
+    
+    if (openBattlemapBtn) openBattlemapBtn.addEventListener('click', openBattleMapWindow);
+    if (toggleGridBtn) toggleGridBtn.addEventListener('click', toggleGrid);
+    if (centerMapBtn) centerMapBtn.addEventListener('click', centerMap);
     
     document.querySelectorAll('.tool-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -187,10 +213,15 @@ function initializeEventListeners() {
     });
     
     // Chat and secret messages
-    document.getElementById('secret-message-btn').addEventListener('click', openSecretMessageModal);
-    document.getElementById('dice-roll-btn').addEventListener('click', toggleDicePanel);
-    document.getElementById('send-secret-message').addEventListener('click', sendSecretMessage);
-    document.getElementById('cancel-secret-message').addEventListener('click', closeSecretMessageModal);
+    const secretMsgBtn = document.getElementById('secret-message-btn');
+    const diceRollBtn = document.getElementById('dice-roll-btn');
+    const sendSecretBtn = document.getElementById('send-secret-message');
+    const cancelSecretBtn = document.getElementById('cancel-secret-message');
+    
+    if (secretMsgBtn) secretMsgBtn.addEventListener('click', openSecretMessageModal);
+    if (diceRollBtn) diceRollBtn.addEventListener('click', toggleDicePanel);
+    if (sendSecretBtn) sendSecretBtn.addEventListener('click', sendSecretMessage);
+    if (cancelSecretBtn) cancelSecretBtn.addEventListener('click', closeSecretMessageModal);
     
     // DM Book controls
     document.querySelectorAll('.chapter-btn').forEach(btn => {
@@ -199,9 +230,13 @@ function initializeEventListeners() {
         });
     });
     
-    document.getElementById('edit-chapter-btn').addEventListener('click', startEditingChapter);
-    document.getElementById('save-chapter-btn').addEventListener('click', saveChapter);
-    document.getElementById('cancel-edit-btn').addEventListener('click', cancelEditingChapter);
+    const editChapterBtn = document.getElementById('edit-chapter-btn');
+    const saveChapterBtn = document.getElementById('save-chapter-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    
+    if (editChapterBtn) editChapterBtn.addEventListener('click', startEditingChapter);
+    if (saveChapterBtn) saveChapterBtn.addEventListener('click', saveChapter);
+    if (cancelEditBtn) cancelEditBtn.addEventListener('click', cancelEditingChapter);
     
     // Modal close buttons
     document.querySelectorAll('.close').forEach(closeBtn => {
@@ -225,22 +260,33 @@ function initializeEventListeners() {
     });
     
     // Chat functionality
-    document.getElementById('send-message').addEventListener('click', sendMessage);
-    document.getElementById('chat-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            sendMessage();
-        }
-    });
+    const sendMsgBtn = document.getElementById('send-message');
+    const chatInput = document.getElementById('chat-input');
+    
+    if (sendMsgBtn) sendMsgBtn.addEventListener('click', sendMessage);
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    }
     
     // File upload
-    document.getElementById('upload-btn').addEventListener('click', () => {
-        document.getElementById('file-input').click();
-    });
+    const uploadBtn = document.getElementById('upload-btn');
+    const fileInput = document.getElementById('file-input');
     
-    document.getElementById('file-input').addEventListener('change', uploadFile);
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', () => {
+            if (fileInput) fileInput.click();
+        });
+    }
+    
+    if (fileInput) fileInput.addEventListener('change', uploadFile);
     
     // Dice rolling
-    document.getElementById('roll-dice').addEventListener('click', rollDice);
+    const rollDiceBtn = document.getElementById('roll-dice');
+    if (rollDiceBtn) rollDiceBtn.addEventListener('click', () => rollDice());
     
     // Editable fields
     document.addEventListener('click', (e) => {
@@ -250,10 +296,16 @@ function initializeEventListeners() {
         }
     });
     
-    document.getElementById('save-edit').addEventListener('click', saveFieldEdit);
-    document.getElementById('cancel-edit').addEventListener('click', () => {
-        document.getElementById('edit-modal').style.display = 'none';
-    });
+    const saveEditBtn = document.getElementById('save-edit');
+    const cancelEditBtn = document.getElementById('cancel-edit');
+    
+    if (saveEditBtn) saveEditBtn.addEventListener('click', saveFieldEdit);
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', () => {
+            const editModal = document.getElementById('edit-modal');
+            if (editModal) editModal.style.display = 'none';
+        });
+    }
     
     // Battle map mouse events
     const canvas = document.getElementById('battlemap-canvas');
@@ -268,9 +320,13 @@ function initializeEventListeners() {
 // Character Sheet System
 function initializeCharacterSheet() {
     // Character sheet event listeners
-    document.getElementById('save-character-sheet').addEventListener('click', saveCharacterSheet);
-    document.getElementById('cancel-character-sheet').addEventListener('click', closeCharacterSheet);
-    document.getElementById('delete-character-btn').addEventListener('click', confirmDeleteCharacter);
+    const saveSheetBtn = document.getElementById('save-character-sheet');
+    const cancelSheetBtn = document.getElementById('cancel-character-sheet');
+    const deleteCharBtn = document.getElementById('delete-character-btn');
+    
+    if (saveSheetBtn) saveSheetBtn.addEventListener('click', saveCharacterSheet);
+    if (cancelSheetBtn) cancelSheetBtn.addEventListener('click', closeCharacterSheet);
+    if (deleteCharBtn) deleteCharBtn.addEventListener('click', confirmDeleteCharacter);
     
     // Ability score change listeners
     ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].forEach(ability => {
@@ -359,45 +415,56 @@ function updateProficiencyBonus() {
     updateModifiers();
 }
 
-// Open character sheet
+// Open character sheet with improved error handling
 async function openCharacterSheet(characterId = null) {
-    currentCharacterSheet = characterId;
-    isEditingSheet = characterId !== null;
-    
-    const modal = document.getElementById('character-sheet-modal');
-    const title = document.getElementById('character-sheet-title');
-    const deleteBtn = document.getElementById('delete-character-btn');
-    
-    if (isEditingSheet) {
-        title.textContent = 'Character Sheet';
-        deleteBtn.style.display = 'inline-block';
+    try {
+        currentCharacterSheet = characterId;
+        isEditingSheet = characterId !== null;
         
-        try {
-            const response = await fetch(`/api/characters/${characterId}/sheet`);
-            const character = await response.json();
+        const modal = document.getElementById('character-sheet-modal');
+        if (!modal) {
+            console.error('Character sheet modal not found');
+            showNotification('Character sheet modal not found', 'error');
+            return;
+        }
+        
+        const title = document.getElementById('character-sheet-title');
+        const deleteBtn = document.getElementById('delete-character-btn');
+        
+        if (isEditingSheet) {
+            if (title) title.textContent = 'Character Sheet';
+            if (deleteBtn) deleteBtn.style.display = 'inline-block';
             
-            if (response.ok) {
-                populateCharacterSheet(character);
-            } else {
+            try {
+                const response = await fetch(`/api/characters/${characterId}/sheet`);
+                const character = await response.json();
+                
+                if (response.ok) {
+                    populateCharacterSheet(character);
+                } else {
+                    showNotification('Failed to load character sheet', 'error');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error loading character sheet:', error);
                 showNotification('Failed to load character sheet', 'error');
                 return;
             }
-        } catch (error) {
-            console.error('Error loading character sheet:', error);
-            showNotification('Failed to load character sheet', 'error');
-            return;
+        } else {
+            if (title) title.textContent = 'Create New Character';
+            if (deleteBtn) deleteBtn.style.display = 'none';
+            clearCharacterSheet();
         }
-    } else {
-        title.textContent = 'Create New Character';
-        deleteBtn.style.display = 'none';
-        clearCharacterSheet();
+        
+        modal.style.display = 'block';
+        setTimeout(() => {
+            updateModifiers();
+            addQuickRollListeners();
+        }, 100);
+    } catch (error) {
+        console.error('Error opening character sheet:', error);
+        showNotification('Failed to open character sheet', 'error');
     }
-    
-    modal.style.display = 'block';
-    setTimeout(() => {
-        updateModifiers();
-        addQuickRollListeners();
-    }, 100);
 }
 
 // Populate character sheet with data
@@ -737,17 +804,51 @@ function switchTab(tabName) {
     });
     
     // Show selected tab content
-    document.getElementById(`${tabName}-tab`).classList.add('active');
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    const selectedTab = document.getElementById(`${tabName}-tab`);
+    const selectedBtn = document.querySelector(`[data-tab="${tabName}"]`);
     
-    // Load initial data
+    if (selectedTab) selectedTab.classList.add('active');
+    if (selectedBtn) selectedBtn.classList.add('active');
+    
+    // Load tab-specific data if needed
+    switch(tabName) {
+        case 'characters':
+            loadCharacters();
+            break;
+        case 'campaign':
+            loadCampaignData();
+            break;
+        case 'chat':
+            loadMessages();
+            break;
+        case 'files':
+            loadFiles();
+            break;
+        case 'combat':
+            loadCombatState();
+            break;
+        case 'battlemap':
+            renderBattleMap();
+            break;
+        case 'dm-book':
+            loadDMBookSection(currentSection);
+            break;
+    }
+}
+
+// Load initial data on application startup
 async function loadInitialData() {
-    await loadCharacters();
-    await loadCampaignData();
-    await loadMessages();
-    await loadFiles();
-    await loadCombatState();
-    await loadUsersList();
+    try {
+        await loadCharacters();
+        await loadCampaignData();
+        await loadMessages();
+        await loadFiles();
+        await loadCombatState();
+        await loadUsersList();
+    } catch (error) {
+        console.error('Error loading initial data:', error);
+        showNotification('Failed to load some data. Please refresh the page.', 'warning');
+    }
 }
 
 // Character management
@@ -1559,519 +1660,3 @@ function updateTokenList() {
         `;
         tokenList.appendChild(tokenItem);
     });
-}
-
-function openBattleMapWindow() {
-    const newWindow = window.open('/battlemap', 'battlemap', 'width=1200,height=800');
-    if (newWindow) {
-        showNotification('Battle map opened in new window', 'success');
-    } else {
-        showNotification('Failed to open battle map window. Please allow popups.', 'warning');
-    }
-}
-
-// Secret Messages System
-async function loadUsersList() {
-    // Load users for secret message dropdown
-    try {
-        const response = await fetch('/api/characters');
-        const chars = await response.json();
-        
-        const select = document.getElementById('secret-recipient');
-        if (!select) return;
-        
-        select.innerHTML = '<option value="">Select recipient...</option>';
-        
-        // Get unique usernames
-        const users = [...new Set(chars.map(c => c.username).filter(u => u && u !== currentUser.username))];
-        
-        users.forEach(username => {
-            const option = document.createElement('option');
-            option.value = username;
-            option.textContent = username;
-            select.appendChild(option);
-        });
-        
-        // Add DM option for players
-        if (currentUser.role === 'player') {
-            const dmOption = document.createElement('option');
-            dmOption.value = 'dm';
-            dmOption.textContent = 'DM';
-            select.appendChild(dmOption);
-        }
-        
-    } catch (error) {
-        console.error('Error loading users:', error);
-    }
-}
-
-function openSecretMessageModal() {
-    document.getElementById('secret-message-modal').style.display = 'block';
-}
-
-function closeSecretMessageModal() {
-    document.getElementById('secret-message-modal').style.display = 'none';
-    document.getElementById('secret-recipient').value = '';
-    document.getElementById('secret-message-text').value = '';
-}
-
-async function sendSecretMessage() {
-    const recipient = document.getElementById('secret-recipient').value;
-    const message = document.getElementById('secret-message-text').value.trim();
-    
-    if (!recipient || !message) {
-        showNotification('Please select a recipient and enter a message', 'warning');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/secret-message', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ recipient, message })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            closeSecretMessageModal();
-            showNotification(`Secret message sent to ${recipient}`, 'success');
-        } else {
-            showNotification('Failed to send secret message', 'error');
-        }
-    } catch (error) {
-        console.error('Error sending secret message:', error);
-        showNotification('Failed to send secret message', 'error');
-    }
-}
-
-function showSecretMessage(messageData) {
-    const parchment = document.getElementById('secret-parchment');
-    const sender = document.getElementById('parchment-sender');
-    const message = document.getElementById('parchment-message');
-    
-    sender.textContent = messageData.sender;
-    message.textContent = messageData.message;
-    
-    // Animate parchment appearing
-    parchment.style.display = 'block';
-    parchment.style.animation = 'parchmentSlideIn 0.8s ease-out';
-    
-    // Auto-hide after 10 seconds
-    setTimeout(() => {
-        if (parchment.style.display === 'block') {
-            parchment.style.animation = 'parchmentSlideOut 0.5s ease-in';
-            setTimeout(() => {
-                parchment.style.display = 'none';
-            }, 500);
-        }
-    }, 10000);
-}
-
-// DM Book System
-async function loadDMBookSection(section) {
-    if (currentUser.role !== 'dm' && section !== 'overview') {
-        showNotification('Only DMs can access this content', 'warning');
-        return;
-    }
-    
-    currentSection = section;
-    
-    // Update active chapter button
-    document.querySelectorAll('.chapter-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    document.querySelector(`[data-section="${section}"]`).classList.add('active');
-    
-    try {
-        const response = await fetch(`/api/dm/book/${section}`);
-        const data = await response.json();
-        
-        if (response.ok) {
-            document.getElementById('book-chapter-content').innerHTML = `
-                <h2>${data.title}</h2>
-                ${data.content}
-            `;
-            
-            // Update editor with current content
-            document.getElementById('chapter-title').value = data.title;
-            document.getElementById('chapter-content').value = data.content;
-        } else {
-            document.getElementById('book-chapter-content').innerHTML = `
-                <h2>Section Not Found</h2>
-                <p>This section of the DM book could not be loaded.</p>
-            `;
-        }
-    } catch (error) {
-        console.error('Error loading DM book section:', error);
-        document.getElementById('book-chapter-content').innerHTML = `
-            <h2>Error</h2>
-            <p>Failed to load this section. Please try again.</p>
-        `;
-    }
-}
-
-function startEditingChapter() {
-    if (currentUser.role !== 'dm') {
-        showNotification('Only DMs can edit the book', 'warning');
-        return;
-    }
-    
-    editingChapter = true;
-    document.getElementById('book-chapter-content').style.display = 'none';
-    document.getElementById('book-chapter-editor').style.display = 'block';
-    
-    document.getElementById('edit-chapter-btn').style.display = 'none';
-    document.getElementById('save-chapter-btn').style.display = 'inline-block';
-    document.getElementById('cancel-edit-btn').style.display = 'inline-block';
-}
-
-function cancelEditingChapter() {
-    editingChapter = false;
-    document.getElementById('book-chapter-content').style.display = 'block';
-    document.getElementById('book-chapter-editor').style.display = 'none';
-    
-    document.getElementById('edit-chapter-btn').style.display = 'inline-block';
-    document.getElementById('save-chapter-btn').style.display = 'none';
-    document.getElementById('cancel-edit-btn').style.display = 'none';
-}
-
-async function saveChapter() {
-    const title = document.getElementById('chapter-title').value;
-    const content = document.getElementById('chapter-content').value;
-    
-    try {
-        const response = await fetch(`/api/dm/book/${currentSection}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, content })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            cancelEditingChapter();
-            loadDMBookSection(currentSection);
-            showNotification('Chapter saved successfully', 'success');
-        } else {
-            showNotification('Failed to save chapter', 'error');
-        }
-    } catch (error) {
-        console.error('Error saving chapter:', error);
-        showNotification('Failed to save chapter', 'error');
-    }
-}
-
-// Chat and Dice functionality
-function toggleDicePanel() {
-    const panel = document.getElementById('quick-dice-panel');
-    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-}
-
-// Campaign data management
-async function loadCampaignData() {
-    try {
-        const response = await fetch('/api/campaign');
-        const data = await response.json();
-        campaignData = data;
-        renderCampaignData();
-    } catch (error) {
-        console.error('Error loading campaign data:', error);
-        showNotification('Failed to load campaign data', 'error');
-    }
-}
-
-function renderCampaignData() {
-    const fields = ['location', 'session_notes', 'npcs', 'treasure'];
-    
-    fields.forEach(field => {
-        const element = document.querySelector(`[data-field="${field}"] .field-content`);
-        if (element) {
-            const value = campaignData[field] || 'Click edit to add content...';
-            element.textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-        }
-    });
-}
-
-function updateCampaignField(key, value) {
-    campaignData[key] = value;
-    const element = document.querySelector(`[data-field="${key}"] .field-content`);
-    if (element) {
-        element.textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-    }
-}
-
-function openEditModal(fieldElement) {
-    const field = fieldElement.dataset.field;
-    const modal = document.getElementById('edit-modal');
-    const title = document.getElementById('edit-modal-title');
-    const textarea = document.getElementById('edit-textarea');
-    
-    title.textContent = `Edit ${field.replace('_', ' ').toUpperCase()}`;
-    
-    const currentValue = campaignData[field] || '';
-    textarea.value = typeof currentValue === 'string' ? currentValue : JSON.stringify(currentValue, null, 2);
-    
-    currentEditField = field;
-    modal.style.display = 'block';
-}
-
-async function saveFieldEdit() {
-    if (!currentEditField) return;
-    
-    const textarea = document.getElementById('edit-textarea');
-    const value = textarea.value;
-    
-    try {
-        const response = await fetch(`/api/campaign/${currentEditField}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ value })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            document.getElementById('edit-modal').style.display = 'none';
-            showNotification('Field updated successfully', 'success');
-        } else {
-            showNotification('Failed to update field', 'error');
-        }
-    } catch (error) {
-        console.error('Error updating field:', error);
-        showNotification('Failed to update field', 'error');
-    }
-}
-
-// Chat functionality
-async function loadMessages() {
-    try {
-        const response = await fetch('/api/messages');
-        const messages = await response.json();
-        renderMessages(messages);
-    } catch (error) {
-        console.error('Error loading messages:', error);
-        showNotification('Failed to load messages', 'error');
-    }
-}
-
-function renderMessages(messages) {
-    const container = document.getElementById('chat-messages');
-    container.innerHTML = '';
-    
-    messages.forEach(message => {
-        addMessageToChat(message, false);
-    });
-    
-    // Scroll to bottom
-    container.scrollTop = container.scrollHeight;
-}
-
-function addMessageToChat(message, scrollToBottom = true) {
-    const container = document.getElementById('chat-messages');
-    const messageElement = document.createElement('div');
-    messageElement.className = `message ${message.type || 'chat'}`;
-    
-    const timestamp = new Date(message.timestamp).toLocaleTimeString();
-    
-    messageElement.innerHTML = `
-        <div class="message-header">
-            <span class="message-username">${message.username}</span>
-            <span class="message-timestamp">${timestamp}</span>
-        </div>
-        <div class="message-content">${message.message}</div>
-    `;
-    
-    container.appendChild(messageElement);
-    
-    if (scrollToBottom) {
-        container.scrollTop = container.scrollHeight;
-    }
-}
-
-function sendMessage() {
-    const input = document.getElementById('chat-input');
-    const message = input.value.trim();
-    
-    if (message) {
-        socket.emit('send_message', { message, type: 'chat' });
-        input.value = '';
-    }
-}
-
-// File management
-async function loadFiles() {
-    try {
-        const response = await fetch('/api/files');
-        const files = await response.json();
-        renderFiles(files);
-    } catch (error) {
-        console.error('Error loading files:', error);
-        showNotification('Failed to load files', 'error');
-    }
-}
-
-function renderFiles(files) {
-    const container = document.getElementById('files-list');
-    container.innerHTML = '';
-    
-    if (files.length === 0) {
-        container.innerHTML = '<p>No files uploaded yet.</p>';
-        return;
-    }
-    
-    files.forEach(file => {
-        const fileElement = document.createElement('div');
-        fileElement.className = 'file-item';
-        
-        const uploadDate = new Date(file.upload_date).toLocaleDateString();
-        
-        fileElement.innerHTML = `
-            <div class="file-info">
-                <h4>${file.original_name}</h4>
-                <div class="file-meta">
-                    Uploaded by ${file.uploaded_by} on ${uploadDate}
-                </div>
-            </div>
-            <div class="file-actions">
-                <a href="/files/${file.filename}" target="_blank" class="btn btn-primary btn-small">View</a>
-                <a href="/files/${file.filename}" download="${file.original_name}" class="btn btn-secondary btn-small">Download</a>
-            </div>
-        `;
-        
-        container.appendChild(fileElement);
-    });
-}
-
-async function uploadFile() {
-    const fileInput = document.getElementById('file-input');
-    const file = fileInput.files[0];
-    
-    if (!file) return;
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    try {
-        showLoading(true);
-        
-        const response = await fetch('/upload', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showNotification('File uploaded successfully', 'success');
-            loadFiles();
-        } else {
-            showNotification(data.error || 'Failed to upload file', 'error');
-        }
-    } catch (error) {
-        console.error('Error uploading file:', error);
-        showNotification('Failed to upload file', 'error');
-    } finally {
-        showLoading(false);
-        fileInput.value = '';
-    }
-}
-
-// Dice rolling
-function rollDice(diceType = null, modifier = null, reason = null) {
-    const dice = diceType || document.getElementById('dice-type').value;
-    const mod = modifier !== null ? modifier : parseInt(document.getElementById('dice-modifier').value) || 0;
-    const rollReason = reason || document.getElementById('dice-reason').value;
-    
-    socket.emit('dice_roll', {
-        dice: dice,
-        modifier: mod,
-        reason: rollReason
-    });
-    
-    // Clear reason field after rolling (but keep dice type and modifier)
-    if (!reason) {
-        document.getElementById('dice-reason').value = '';
-    }
-}
-
-// Utility functions
-function showNotification(message, type = 'info') {
-    const container = document.getElementById('notifications');
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    
-    container.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 100);
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            if (container.contains(notification)) {
-                container.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
-}
-
-function showLoading(show) {
-    const loading = document.getElementById('loading');
-    loading.style.display = show ? 'block' : 'none';
-}
-
-// Auto-refresh functionality
-setInterval(() => {
-    // Refresh data every 30 seconds to keep in sync
-    if (!document.hidden) {
-        loadCharacters();
-        updateCombatDisplay();
-    }
-}, 30000);
-
-// Handle page visibility change
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-        // Page became visible, refresh data
-        loadInitialData();
-        renderBattleMap();
-    }
-});
-
-// Make functions globally available
-window.openCharacterSheet = openCharacterSheet;
-window.deleteCharacter = deleteCharacter;
-window.editCharacter = editCharacter;
-window.duplicateCharacter = duplicateCharacter;
-window.removeEnemy = removeEnemy;
-window.rollSkill = rollSkill;
-window.rollSave = rollSave;d data if needed
-    switch(tabName) {
-        case 'characters':
-            loadCharacters();
-            break;
-        case 'campaign':
-            loadCampaignData();
-            break;
-        case 'chat':
-            loadMessages();
-            break;
-        case 'files':
-            loadFiles();
-            break;
-        case 'combat':
-            loadCombatState();
-            break;
-        case 'battlemap':
-            renderBattleMap();
-            break;
-        case 'dm-book':
-            loadDMBookSection(currentSection);
-            break;
-    }
-}
-
-// Loa

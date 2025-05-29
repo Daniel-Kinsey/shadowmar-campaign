@@ -10,14 +10,20 @@ from werkzeug.utils import secure_filename
 import base64
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
-app.config['UPLOAD_FOLDER'] = 'uploads'
+
+# Production-ready configuration
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+# Upload configuration
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
-
-# Ensure upload directory exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'webp'}
 
@@ -49,6 +55,10 @@ def update_character_schema():
     """Update characters table with full D&D character sheet fields"""
     conn = sqlite3.connect('shadowmar.db')
     cursor = conn.cursor()
+    
+    # Get existing columns
+    cursor.execute("PRAGMA table_info(characters)")
+    existing_columns = [column[1] for column in cursor.fetchall()]
     
     # Add new columns for full character sheet
     new_columns = [
@@ -84,11 +94,11 @@ def update_character_schema():
     ]
     
     for column_name, column_def in new_columns:
-        try:
-            cursor.execute(f'ALTER TABLE characters ADD COLUMN {column_name} {column_def}')
-            print(f"Added column: {column_name}")
-        except sqlite3.OperationalError as e:
-            if "duplicate column name" not in str(e):
+        if column_name not in existing_columns:
+            try:
+                cursor.execute(f'ALTER TABLE characters ADD COLUMN {column_name} {column_def}')
+                print(f"Added column: {column_name}")
+            except sqlite3.OperationalError as e:
                 print(f"Error adding column {column_name}: {e}")
     
     conn.commit()
@@ -226,48 +236,49 @@ def init_db():
         )
     ''')
     
-    # Create default users for testing
-    try:
-        # Default DM account
-        cursor.execute(
-            'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
-            ('dm', hash_password('password'), 'dm')
-        )
-        
-        # Default player account
-        cursor.execute(
-            'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
-            ('player', hash_password('password'), 'player')
-        )
-        
-        # Add sample campaign data
-        cursor.execute(
-            'INSERT INTO campaign_data (key, value, updated_by) VALUES (?, ?, ?)',
-            ('location', 'The bustling port town of Shadowmar, where pirates gather to plan their next adventure.', 'System')
-        )
-        
-        cursor.execute(
-            'INSERT INTO campaign_data (key, value, updated_by) VALUES (?, ?, ?)',
-            ('session_notes', 'Session 1: The crew arrived in Shadowmar and met Captain Blackwater at the Rusty Anchor tavern. They learned about the legendary treasure hidden on Skull Island.', 'System')
-        )
-        
-        cursor.execute(
-            'INSERT INTO campaign_data (key, value, updated_by) VALUES (?, ?, ?)',
-            ('npcs', 'Captain Blackwater - Grizzled pirate captain with knowledge of Skull Island\nTavern Keeper Martha - Friendly but knows everyone\'s secrets\nFirst Mate Rodriguez - Blackwater\'s trusted companion', 'System')
-        )
-        
-        cursor.execute(
-            'INSERT INTO campaign_data (key, value, updated_by) VALUES (?, ?, ?)',
-            ('treasure', 'Found: 150 gold pieces, Silver compass (magical), Healing potion x2\nLost: Old treasure map (stolen by rival crew)\nQuest: Ancient artifact on Skull Island worth 10,000 gold', 'System')
-        )
-        
-        print("✅ Default accounts created:")
-        print("   DM Login: username=dm, password=password")
-        print("   Player Login: username=player, password=password")
-        
-    except sqlite3.IntegrityError:
-        # Users already exist, that's fine
-        pass
+    # Create default users for testing (only in development)
+    if os.environ.get('FLASK_ENV') != 'production':
+        try:
+            # Default DM account
+            cursor.execute(
+                'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
+                ('dm', hash_password('password'), 'dm')
+            )
+            
+            # Default player account
+            cursor.execute(
+                'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
+                ('player', hash_password('password'), 'player')
+            )
+            
+            # Add sample campaign data
+            cursor.execute(
+                'INSERT INTO campaign_data (key, value, updated_by) VALUES (?, ?, ?)',
+                ('location', 'The bustling port town of Shadowmar, where pirates gather to plan their next adventure.', 'System')
+            )
+            
+            cursor.execute(
+                'INSERT INTO campaign_data (key, value, updated_by) VALUES (?, ?, ?)',
+                ('session_notes', 'Session 1: The crew arrived in Shadowmar and met Captain Blackwater at the Rusty Anchor tavern. They learned about the legendary treasure hidden on Skull Island.', 'System')
+            )
+            
+            cursor.execute(
+                'INSERT INTO campaign_data (key, value, updated_by) VALUES (?, ?, ?)',
+                ('npcs', 'Captain Blackwater - Grizzled pirate captain with knowledge of Skull Island\nTavern Keeper Martha - Friendly but knows everyone\'s secrets\nFirst Mate Rodriguez - Blackwater\'s trusted companion', 'System')
+            )
+            
+            cursor.execute(
+                'INSERT INTO campaign_data (key, value, updated_by) VALUES (?, ?, ?)',
+                ('treasure', 'Found: 150 gold pieces, Silver compass (magical), Healing potion x2\nLost: Old treasure map (stolen by rival crew)\nQuest: Ancient artifact on Skull Island worth 10,000 gold', 'System')
+            )
+            
+            print("✅ Default accounts created:")
+            print("   DM Login: username=dm, password=password")
+            print("   Player Login: username=player, password=password")
+            
+        except sqlite3.IntegrityError:
+            # Users already exist, that's fine
+            pass
     
     conn.commit()
     conn.close()
@@ -282,6 +293,11 @@ def get_db_connection():
     conn = sqlite3.connect('shadowmar.db')
     conn.row_factory = sqlite3.Row
     return conn
+
+@app.route('/health')
+def health_check():
+    """Health check endpoint for monitoring"""
+    return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()}), 200
 
 @app.route('/')
 def index():
@@ -353,18 +369,32 @@ def get_characters():
         return jsonify({'error': 'Not authenticated'}), 401
     
     conn = get_db_connection()
-    if session['role'] == 'dm':
-        characters = conn.execute(
-            'SELECT c.*, u.username FROM characters c JOIN users u ON c.user_id = u.id ORDER BY c.name'
-        ).fetchall()
-    else:
-        characters = conn.execute(
-            'SELECT * FROM characters WHERE user_id = ? ORDER BY name',
-            (session['user_id'],)
-        ).fetchall()
-    conn.close()
-    
-    return jsonify([dict(char) for char in characters])
+    try:
+        if session['role'] == 'dm':
+            characters = conn.execute(
+                'SELECT c.*, u.username FROM characters c JOIN users u ON c.user_id = u.id ORDER BY c.name'
+            ).fetchall()
+        else:
+            characters = conn.execute(
+                'SELECT * FROM characters WHERE user_id = ? ORDER BY name',
+                (session['user_id'],)
+            ).fetchall()
+        
+        # Add user_id to character data for permission checking
+        result = []
+        for char in characters:
+            char_dict = dict(char)
+            # Ensure user_id is included for permission checks in frontend
+            if 'user_id' not in char_dict and session['role'] != 'dm':
+                char_dict['user_id'] = session['user_id']
+            result.append(char_dict)
+        
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error loading characters: {e}")
+        return jsonify({'error': 'Failed to load characters'}), 500
+    finally:
+        conn.close()
 
 @app.route('/api/characters', methods=['POST'])
 def create_character():
@@ -375,63 +405,68 @@ def create_character():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Enhanced character creation with all fields
-    cursor.execute('''
-        INSERT INTO characters (
-            user_id, name, class, race, background, level, alignment,
-            hp_current, hp_max, ac, speed, initiative,
-            strength, dexterity, constitution, intelligence, wisdom, charisma,
-            proficiency_bonus, inspiration, 
-            skills, saving_throws, languages, proficiencies,
-            equipment, features_traits, attacks_spells,
-            personality_traits, ideals, bonds, flaws,
-            stats, spell_slots, status_effects, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        session['user_id'],
-        data.get('name', ''),
-        data.get('class', ''),
-        data.get('race', ''),
-        data.get('background', ''),
-        data.get('level', 1),
-        data.get('alignment', ''),
-        data.get('hp_current', 10),
-        data.get('hp_max', 10),
-        data.get('ac', 10),
-        data.get('speed', 30),
-        data.get('initiative', 0),
-        data.get('strength', 10),
-        data.get('dexterity', 10),
-        data.get('constitution', 10),
-        data.get('intelligence', 10),
-        data.get('wisdom', 10),
-        data.get('charisma', 10),
-        data.get('proficiency_bonus', 2),
-        data.get('inspiration', 0),
-        json.dumps(data.get('skills', {})),
-        json.dumps(data.get('saving_throws', {})),
-        data.get('languages', ''),
-        data.get('proficiencies', ''),
-        data.get('equipment', ''),
-        data.get('features_traits', ''),
-        data.get('attacks_spells', ''),
-        data.get('personality_traits', ''),
-        data.get('ideals', ''),
-        data.get('bonds', ''),
-        data.get('flaws', ''),
-        json.dumps(data.get('stats', {})),
-        json.dumps(data.get('spell_slots', {})),
-        json.dumps(data.get('status_effects', [])),
-        data.get('notes', '')
-    ))
-    
-    char_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    
-    socketio.emit('character_update', {'action': 'create', 'character_id': char_id}, room='campaign')
-    
-    return jsonify({'success': True, 'character_id': char_id})
+    try:
+        # Enhanced character creation with all fields
+        cursor.execute('''
+            INSERT INTO characters (
+                user_id, name, class, race, background, level, alignment,
+                hp_current, hp_max, ac, speed, initiative,
+                strength, dexterity, constitution, intelligence, wisdom, charisma,
+                proficiency_bonus, inspiration, 
+                skills, saving_throws, languages, proficiencies,
+                equipment, features_traits, attacks_spells,
+                personality_traits, ideals, bonds, flaws,
+                stats, spell_slots, status_effects, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            session['user_id'],
+            data.get('name', ''),
+            data.get('class', ''),
+            data.get('race', ''),
+            data.get('background', ''),
+            data.get('level', 1),
+            data.get('alignment', ''),
+            data.get('hp_current', 10),
+            data.get('hp_max', 10),
+            data.get('ac', 10),
+            data.get('speed', 30),
+            data.get('initiative', 0),
+            data.get('strength', 10),
+            data.get('dexterity', 10),
+            data.get('constitution', 10),
+            data.get('intelligence', 10),
+            data.get('wisdom', 10),
+            data.get('charisma', 10),
+            data.get('proficiency_bonus', 2),
+            data.get('inspiration', 0),
+            json.dumps(data.get('skills', {})),
+            json.dumps(data.get('saving_throws', {})),
+            data.get('languages', ''),
+            data.get('proficiencies', ''),
+            data.get('equipment', ''),
+            data.get('features_traits', ''),
+            data.get('attacks_spells', ''),
+            data.get('personality_traits', ''),
+            data.get('ideals', ''),
+            data.get('bonds', ''),
+            data.get('flaws', ''),
+            json.dumps(data.get('stats', {})),
+            json.dumps(data.get('spell_slots', {})),
+            json.dumps(data.get('status_effects', [])),
+            data.get('notes', '')
+        ))
+        
+        char_id = cursor.lastrowid
+        conn.commit()
+        
+        socketio.emit('character_update', {'action': 'create', 'character_id': char_id}, room='campaign')
+        
+        return jsonify({'success': True, 'character_id': char_id})
+    except Exception as e:
+        print(f"Error creating character: {e}")
+        return jsonify({'error': 'Failed to create character'}), 500
+    finally:
+        conn.close()
 
 @app.route('/api/characters/<int:char_id>', methods=['PUT'])
 def update_character(char_id):
@@ -441,74 +476,78 @@ def update_character(char_id):
     data = request.get_json()
     conn = get_db_connection()
     
-    # Check if user owns character or is DM
-    character = conn.execute(
-        'SELECT user_id FROM characters WHERE id = ?', (char_id,)
-    ).fetchone()
-    
-    if not character or (character['user_id'] != session['user_id'] and session['role'] != 'dm'):
+    try:
+        # Check if user owns character or is DM
+        character = conn.execute(
+            'SELECT user_id FROM characters WHERE id = ?', (char_id,)
+        ).fetchone()
+        
+        if not character or (character['user_id'] != session['user_id'] and session['role'] != 'dm'):
+            return jsonify({'error': 'Permission denied'}), 403
+        
+        # Update character with all fields
+        conn.execute('''
+            UPDATE characters 
+            SET name=?, class=?, race=?, background=?, level=?, alignment=?,
+                hp_current=?, hp_max=?, ac=?, speed=?, initiative=?,
+                strength=?, dexterity=?, constitution=?, intelligence=?, wisdom=?, charisma=?,
+                proficiency_bonus=?, inspiration=?, skills=?, saving_throws=?,
+                languages=?, proficiencies=?, equipment=?, features_traits=?, attacks_spells=?,
+                personality_traits=?, ideals=?, bonds=?, flaws=?, stats=?, spell_slots=?, status_effects=?, notes=?
+            WHERE id=?
+        ''', (
+            data.get('name', ''),
+            data.get('class', ''),
+            data.get('race', ''),
+            data.get('background', ''),
+            data.get('level', 1),
+            data.get('alignment', ''),
+            data.get('hp_current', 10),
+            data.get('hp_max', 10),
+            data.get('ac', 10),
+            data.get('speed', 30),
+            data.get('initiative', 0),
+            data.get('strength', 10),
+            data.get('dexterity', 10),
+            data.get('constitution', 10),
+            data.get('intelligence', 10),
+            data.get('wisdom', 10),
+            data.get('charisma', 10),
+            data.get('proficiency_bonus', 2),
+            data.get('inspiration', 0),
+            json.dumps(data.get('skills', {})),
+            json.dumps(data.get('saving_throws', {})),
+            data.get('languages', ''),
+            data.get('proficiencies', ''),
+            data.get('equipment', ''),
+            data.get('features_traits', ''),
+            data.get('attacks_spells', ''),
+            data.get('personality_traits', ''),
+            data.get('ideals', ''),
+            data.get('bonds', ''),
+            data.get('flaws', ''),
+            json.dumps(data.get('stats', {})),
+            json.dumps(data.get('spell_slots', {})),
+            json.dumps(data.get('status_effects', [])),
+            data.get('notes', ''),
+            char_id
+        ))
+        
+        conn.commit()
+        
+        socketio.emit('character_update', {
+            'action': 'update', 
+            'character_id': char_id,
+            'updated_by': session['username'],
+            'data': data
+        }, room='campaign')
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error updating character: {e}")
+        return jsonify({'error': 'Failed to update character'}), 500
+    finally:
         conn.close()
-        return jsonify({'error': 'Permission denied'}), 403
-    
-    # Update character with all fields
-    conn.execute('''
-        UPDATE characters 
-        SET name=?, class=?, race=?, background=?, level=?, alignment=?,
-            hp_current=?, hp_max=?, ac=?, speed=?, initiative=?,
-            strength=?, dexterity=?, constitution=?, intelligence=?, wisdom=?, charisma=?,
-            proficiency_bonus=?, inspiration=?, skills=?, saving_throws=?,
-            languages=?, proficiencies=?, equipment=?, features_traits=?, attacks_spells=?,
-            personality_traits=?, ideals=?, bonds=?, flaws=?, stats=?, spell_slots=?, status_effects=?, notes=?
-        WHERE id=?
-    ''', (
-        data.get('name', ''),
-        data.get('class', ''),
-        data.get('race', ''),
-        data.get('background', ''),
-        data.get('level', 1),
-        data.get('alignment', ''),
-        data.get('hp_current', 10),
-        data.get('hp_max', 10),
-        data.get('ac', 10),
-        data.get('speed', 30),
-        data.get('initiative', 0),
-        data.get('strength', 10),
-        data.get('dexterity', 10),
-        data.get('constitution', 10),
-        data.get('intelligence', 10),
-        data.get('wisdom', 10),
-        data.get('charisma', 10),
-        data.get('proficiency_bonus', 2),
-        data.get('inspiration', 0),
-        json.dumps(data.get('skills', {})),
-        json.dumps(data.get('saving_throws', {})),
-        data.get('languages', ''),
-        data.get('proficiencies', ''),
-        data.get('equipment', ''),
-        data.get('features_traits', ''),
-        data.get('attacks_spells', ''),
-        data.get('personality_traits', ''),
-        data.get('ideals', ''),
-        data.get('bonds', ''),
-        data.get('flaws', ''),
-        json.dumps(data.get('stats', {})),
-        json.dumps(data.get('spell_slots', {})),
-        json.dumps(data.get('status_effects', [])),
-        data.get('notes', ''),
-        char_id
-    ))
-    
-    conn.commit()
-    conn.close()
-    
-    socketio.emit('character_update', {
-        'action': 'update', 
-        'character_id': char_id,
-        'updated_by': session['username'],
-        'data': data
-    }, room='campaign')
-    
-    return jsonify({'success': True})
 
 @app.route('/api/characters/<int:char_id>', methods=['DELETE'])
 def delete_character(char_id):
@@ -517,32 +556,35 @@ def delete_character(char_id):
     
     conn = get_db_connection()
     
-    # Check if user owns character or is DM
-    character = conn.execute(
-        'SELECT user_id, name FROM characters WHERE id = ?', (char_id,)
-    ).fetchone()
-    
-    if not character:
+    try:
+        # Check if user owns character or is DM
+        character = conn.execute(
+            'SELECT user_id, name FROM characters WHERE id = ?', (char_id,)
+        ).fetchone()
+        
+        if not character:
+            return jsonify({'error': 'Character not found'}), 404
+        
+        if character['user_id'] != session['user_id'] and session['role'] != 'dm':
+            return jsonify({'error': 'Permission denied'}), 403
+        
+        # Delete the character
+        conn.execute('DELETE FROM characters WHERE id = ?', (char_id,))
+        conn.commit()
+        
+        socketio.emit('character_update', {
+            'action': 'delete', 
+            'character_id': char_id,
+            'character_name': character['name'],
+            'deleted_by': session['username']
+        }, room='campaign')
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error deleting character: {e}")
+        return jsonify({'error': 'Failed to delete character'}), 500
+    finally:
         conn.close()
-        return jsonify({'error': 'Character not found'}), 404
-    
-    if character['user_id'] != session['user_id'] and session['role'] != 'dm':
-        conn.close()
-        return jsonify({'error': 'Permission denied'}), 403
-    
-    # Delete the character
-    conn.execute('DELETE FROM characters WHERE id = ?', (char_id,))
-    conn.commit()
-    conn.close()
-    
-    socketio.emit('character_update', {
-        'action': 'delete', 
-        'character_id': char_id,
-        'character_name': character['name'],
-        'deleted_by': session['username']
-    }, room='campaign')
-    
-    return jsonify({'success': True})
 
 @app.route('/api/characters/<int:char_id>/sheet')
 def get_character_sheet(char_id):
@@ -550,36 +592,41 @@ def get_character_sheet(char_id):
         return jsonify({'error': 'Not authenticated'}), 401
     
     conn = get_db_connection()
-    character = conn.execute(
-        'SELECT c.*, u.username FROM characters c JOIN users u ON c.user_id = u.id WHERE c.id = ?', 
-        (char_id,)
-    ).fetchone()
-    conn.close()
-    
-    if not character:
-        return jsonify({'error': 'Character not found'}), 404
-    
-    # Check permissions (owner or DM)
-    if character['user_id'] != session['user_id'] and session['role'] != 'dm':
-        return jsonify({'error': 'Permission denied'}), 403
-    
-    # Convert to dict and parse JSON fields
-    char_data = dict(character)
     try:
-        char_data['skills'] = json.loads(character['skills']) if character['skills'] else {}
-        char_data['saving_throws'] = json.loads(character['saving_throws']) if character['saving_throws'] else {}
-        char_data['spell_slots'] = json.loads(character['spell_slots']) if character['spell_slots'] else {}
-        char_data['status_effects'] = json.loads(character['status_effects']) if character['status_effects'] else []
-        char_data['stats'] = json.loads(character['stats']) if character['stats'] else {}
-    except:
-        # Handle malformed JSON
-        char_data['skills'] = {}
-        char_data['saving_throws'] = {}
-        char_data['spell_slots'] = {}
-        char_data['status_effects'] = []
-        char_data['stats'] = {}
-    
-    return jsonify(char_data)
+        character = conn.execute(
+            'SELECT c.*, u.username FROM characters c JOIN users u ON c.user_id = u.id WHERE c.id = ?', 
+            (char_id,)
+        ).fetchone()
+        
+        if not character:
+            return jsonify({'error': 'Character not found'}), 404
+        
+        # Check permissions (owner or DM)
+        if character['user_id'] != session['user_id'] and session['role'] != 'dm':
+            return jsonify({'error': 'Permission denied'}), 403
+        
+        # Convert to dict and parse JSON fields
+        char_data = dict(character)
+        try:
+            char_data['skills'] = json.loads(character['skills']) if character['skills'] else {}
+            char_data['saving_throws'] = json.loads(character['saving_throws']) if character['saving_throws'] else {}
+            char_data['spell_slots'] = json.loads(character['spell_slots']) if character['spell_slots'] else {}
+            char_data['status_effects'] = json.loads(character['status_effects']) if character['status_effects'] else []
+            char_data['stats'] = json.loads(character['stats']) if character['stats'] else {}
+        except:
+            # Handle malformed JSON
+            char_data['skills'] = {}
+            char_data['saving_throws'] = {}
+            char_data['spell_slots'] = {}
+            char_data['status_effects'] = []
+            char_data['stats'] = {}
+        
+        return jsonify(char_data)
+    except Exception as e:
+        print(f"Error loading character sheet: {e}")
+        return jsonify({'error': 'Failed to load character sheet'}), 500
+    finally:
+        conn.close()
 
 # Combat API endpoints
 @app.route('/api/combat/state')
@@ -608,17 +655,22 @@ def start_combat():
     
     # Update characters in combat status
     conn = get_db_connection()
-    for combatant in combatants:
-        if combatant.get('type') == 'character':
-            conn.execute(
-                'UPDATE characters SET in_combat = ?, initiative = ? WHERE id = ?',
-                (True, combatant.get('initiative', 0), combatant['id'])
-            )
-    conn.commit()
-    conn.close()
-    
-    socketio.emit('combat_started', combat_state, room='campaign')
-    return jsonify({'success': True, 'combat_state': combat_state})
+    try:
+        for combatant in combatants:
+            if combatant.get('type') == 'character':
+                conn.execute(
+                    'UPDATE characters SET in_combat = ?, initiative = ? WHERE id = ?',
+                    (True, combatant.get('initiative', 0), combatant['id'])
+                )
+        conn.commit()
+        
+        socketio.emit('combat_started', combat_state, room='campaign')
+        return jsonify({'success': True, 'combat_state': combat_state})
+    except Exception as e:
+        print(f"Error starting combat: {e}")
+        return jsonify({'error': 'Failed to start combat'}), 500
+    finally:
+        conn.close()
 
 @app.route('/api/combat/end', methods=['POST'])
 def end_combat():
@@ -636,12 +688,17 @@ def end_combat():
     
     # Update characters out of combat
     conn = get_db_connection()
-    conn.execute('UPDATE characters SET in_combat = ? WHERE in_combat = ?', (False, True))
-    conn.commit()
-    conn.close()
-    
-    socketio.emit('combat_ended', room='campaign')
-    return jsonify({'success': True})
+    try:
+        conn.execute('UPDATE characters SET in_combat = ? WHERE in_combat = ?', (False, True))
+        conn.commit()
+        
+        socketio.emit('combat_ended', room='campaign')
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error ending combat: {e}")
+        return jsonify({'error': 'Failed to end combat'}), 500
+    finally:
+        conn.close()
 
 @app.route('/api/combat/next-turn', methods=['POST'])
 def next_turn():
@@ -668,29 +725,33 @@ def update_combat_hp():
     
     # Check permissions
     conn = get_db_connection()
-    character = conn.execute(
-        'SELECT user_id FROM characters WHERE id = ?', (char_id,)
-    ).fetchone()
-    
-    if not character or (character['user_id'] != session['user_id'] and session['role'] != 'dm'):
+    try:
+        character = conn.execute(
+            'SELECT user_id FROM characters WHERE id = ?', (char_id,)
+        ).fetchone()
+        
+        if not character or (character['user_id'] != session['user_id'] and session['role'] != 'dm'):
+            return jsonify({'error': 'Permission denied'}), 403
+        
+        # Update HP
+        conn.execute(
+            'UPDATE characters SET hp_current = ? WHERE id = ?',
+            (new_hp, char_id)
+        )
+        conn.commit()
+        
+        socketio.emit('hp_updated', {
+            'character_id': char_id,
+            'hp': new_hp,
+            'updated_by': session['username']
+        }, room='campaign')
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error updating HP: {e}")
+        return jsonify({'error': 'Failed to update HP'}), 500
+    finally:
         conn.close()
-        return jsonify({'error': 'Permission denied'}), 403
-    
-    # Update HP
-    conn.execute(
-        'UPDATE characters SET hp_current = ? WHERE id = ?',
-        (new_hp, char_id)
-    )
-    conn.commit()
-    conn.close()
-    
-    socketio.emit('hp_updated', {
-        'character_id': char_id,
-        'hp': new_hp,
-        'updated_by': session['username']
-    }, room='campaign')
-    
-    return jsonify({'success': True})
 
 # Battle Map API endpoints
 @app.route('/api/battlemap/state')
@@ -714,11 +775,13 @@ def move_token():
     can_move = session['role'] == 'dm'
     if not can_move:
         conn = get_db_connection()
-        character = conn.execute(
-            'SELECT user_id FROM characters WHERE id = ?', (token_id,)
-        ).fetchone()
-        can_move = character and character['user_id'] == session['user_id']
-        conn.close()
+        try:
+            character = conn.execute(
+                'SELECT user_id FROM characters WHERE id = ?', (token_id,)
+            ).fetchone()
+            can_move = character and character['user_id'] == session['user_id']
+        finally:
+            conn.close()
     
     if not can_move:
         return jsonify({'error': 'Permission denied'}), 403
@@ -728,21 +791,26 @@ def move_token():
     
     # Update character position in database
     conn = get_db_connection()
-    conn.execute(
-        'UPDATE characters SET token_x = ?, token_y = ? WHERE id = ?',
-        (x, y, token_id)
-    )
-    conn.commit()
-    conn.close()
-    
-    socketio.emit('token_moved', {
-        'token_id': token_id,
-        'x': x,
-        'y': y,
-        'moved_by': session['username']
-    }, room='campaign')
-    
-    return jsonify({'success': True})
+    try:
+        conn.execute(
+            'UPDATE characters SET token_x = ?, token_y = ? WHERE id = ?',
+            (x, y, token_id)
+        )
+        conn.commit()
+        
+        socketio.emit('token_moved', {
+            'token_id': token_id,
+            'x': x,
+            'y': y,
+            'moved_by': session['username']
+        }, room='campaign')
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error moving token: {e}")
+        return jsonify({'error': 'Failed to move token'}), 500
+    finally:
+        conn.close()
 
 # DM Book API endpoints
 @app.route('/api/dm/book/<section>')
@@ -1016,17 +1084,22 @@ def get_campaign_data():
         return jsonify({'error': 'Not authenticated'}), 401
     
     conn = get_db_connection()
-    data = conn.execute('SELECT * FROM campaign_data').fetchall()
-    conn.close()
-    
-    campaign_data = {}
-    for row in data:
-        try:
-            campaign_data[row['key']] = json.loads(row['value'])
-        except:
-            campaign_data[row['key']] = row['value']
-    
-    return jsonify(campaign_data)
+    try:
+        data = conn.execute('SELECT * FROM campaign_data').fetchall()
+        
+        campaign_data = {}
+        for row in data:
+            try:
+                campaign_data[row['key']] = json.loads(row['value'])
+            except:
+                campaign_data[row['key']] = row['value']
+        
+        return jsonify(campaign_data)
+    except Exception as e:
+        print(f"Error loading campaign data: {e}")
+        return jsonify({'error': 'Failed to load campaign data'}), 500
+    finally:
+        conn.close()
 
 @app.route('/api/campaign/<key>', methods=['PUT'])
 def update_campaign_data(key):
@@ -1037,20 +1110,25 @@ def update_campaign_data(key):
     value = json.dumps(data.get('value'))
     
     conn = get_db_connection()
-    conn.execute('''
-        INSERT OR REPLACE INTO campaign_data (key, value, updated_by)
-        VALUES (?, ?, ?)
-    ''', (key, value, session['username']))
-    conn.commit()
-    conn.close()
-    
-    socketio.emit('campaign_update', {
-        'key': key,
-        'value': data.get('value'),
-        'updated_by': session['username']
-    }, room='campaign')
-    
-    return jsonify({'success': True})
+    try:
+        conn.execute('''
+            INSERT OR REPLACE INTO campaign_data (key, value, updated_by)
+            VALUES (?, ?, ?)
+        ''', (key, value, session['username']))
+        conn.commit()
+        
+        socketio.emit('campaign_update', {
+            'key': key,
+            'value': data.get('value'),
+            'updated_by': session['username']
+        }, room='campaign')
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error updating campaign data: {e}")
+        return jsonify({'error': 'Failed to update campaign data'}), 500
+    finally:
+        conn.close()
 
 @app.route('/api/messages')
 def get_messages():
@@ -1058,12 +1136,17 @@ def get_messages():
         return jsonify({'error': 'Not authenticated'}), 401
     
     conn = get_db_connection()
-    messages = conn.execute(
-        'SELECT * FROM messages ORDER BY timestamp DESC LIMIT 100'
-    ).fetchall()
-    conn.close()
-    
-    return jsonify([dict(msg) for msg in reversed(messages)])
+    try:
+        messages = conn.execute(
+            'SELECT * FROM messages ORDER BY timestamp DESC LIMIT 100'
+        ).fetchall()
+        
+        return jsonify([dict(msg) for msg in reversed(messages)])
+    except Exception as e:
+        print(f"Error loading messages: {e}")
+        return jsonify({'error': 'Failed to load messages'}), 500
+    finally:
+        conn.close()
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -1080,28 +1163,33 @@ def upload_file():
     if file and allowed_file(file.filename):
         filename = str(uuid.uuid4()) + '_' + secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
         
-        conn = get_db_connection()
-        conn.execute('''
-            INSERT INTO files (filename, original_name, uploaded_by, file_type)
-            VALUES (?, ?, ?, ?)
-        ''', (
-            filename,
-            file.filename,
-            session['username'],
-            file.filename.rsplit('.', 1)[1].lower()
-        ))
-        conn.commit()
-        conn.close()
-        
-        socketio.emit('file_uploaded', {
-            'filename': filename,
-            'original_name': file.filename,
-            'uploaded_by': session['username']
-        }, room='campaign')
-        
-        return jsonify({'success': True, 'filename': filename})
+        try:
+            file.save(file_path)
+            
+            conn = get_db_connection()
+            conn.execute('''
+                INSERT INTO files (filename, original_name, uploaded_by, file_type)
+                VALUES (?, ?, ?, ?)
+            ''', (
+                filename,
+                file.filename,
+                session['username'],
+                file.filename.rsplit('.', 1)[1].lower()
+            ))
+            conn.commit()
+            conn.close()
+            
+            socketio.emit('file_uploaded', {
+                'filename': filename,
+                'original_name': file.filename,
+                'uploaded_by': session['username']
+            }, room='campaign')
+            
+            return jsonify({'success': True, 'filename': filename})
+        except Exception as e:
+            print(f"Error uploading file: {e}")
+            return jsonify({'error': 'Failed to upload file'}), 500
     
     return jsonify({'error': 'Invalid file type'}), 400
 
@@ -1115,12 +1203,17 @@ def get_files():
         return jsonify({'error': 'Not authenticated'}), 401
     
     conn = get_db_connection()
-    files = conn.execute(
-        'SELECT * FROM files ORDER BY upload_date DESC'
-    ).fetchall()
-    conn.close()
-    
-    return jsonify([dict(file) for file in files])
+    try:
+        files = conn.execute(
+            'SELECT * FROM files ORDER BY upload_date DESC'
+        ).fetchall()
+        
+        return jsonify([dict(file) for file in files])
+    except Exception as e:
+        print(f"Error loading files: {e}")
+        return jsonify({'error': 'Failed to load files'}), 500
+    finally:
+        conn.close()
 
 # Socket.IO events
 @socketio.on('connect')
@@ -1146,19 +1239,23 @@ def handle_message(data):
     
     if message:
         conn = get_db_connection()
-        conn.execute(
-            'INSERT INTO messages (username, message, message_type) VALUES (?, ?, ?)',
-            (session['username'], message, message_type)
-        )
-        conn.commit()
-        conn.close()
-        
-        emit('new_message', {
-            'username': session['username'],
-            'message': message,
-            'type': message_type,
-            'timestamp': datetime.now().isoformat()
-        }, room='campaign')
+        try:
+            conn.execute(
+                'INSERT INTO messages (username, message, message_type) VALUES (?, ?, ?)',
+                (session['username'], message, message_type)
+            )
+            conn.commit()
+            
+            emit('new_message', {
+                'username': session['username'],
+                'message': message,
+                'type': message_type,
+                'timestamp': datetime.now().isoformat()
+            }, room='campaign')
+        except Exception as e:
+            print(f"Error sending message: {e}")
+        finally:
+            conn.close()
 
 @socketio.on('dice_roll')
 def handle_dice_roll(data):
