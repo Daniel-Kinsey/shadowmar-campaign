@@ -486,4 +486,7 @@ if __name__ == '__main__':
     init_db()
     # Use port from environment variable or default to 5000
     port = int(os.environ.get('PORT', 5000))
-    socketio.run(app, debug=True, host='0.0.0.0', port=port)
+    
+    # Production-safe configuration
+    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    socketio.run(app, debug=debug_mode, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
