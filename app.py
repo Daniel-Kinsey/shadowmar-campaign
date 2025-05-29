@@ -509,3 +509,265 @@ if __name__ == '__main__':
     # Production-safe configuration
     debug_mode = os.environ.get('FLASK_ENV') == 'development'
     socketio.run(app, debug=debug_mode, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
+
+# DM Book API endpoints
+@app.route('/api/dm/book/<section>')
+def get_dm_book_section(section):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    # Default content for each section
+    dm_book_content = {
+        'overview': {
+            'title': 'World Overview',
+            'content': '''<h3>🌊 Chronicles of Shadowmar</h3>
+            <p>A seafaring campaign set in the treacherous waters around the mysterious port city of Shadowmar...</p>
+            <div class="dm-secret-box">
+                <h4>🔒 DM Secret</h4>
+                <p>The true power behind Shadowmar is the ancient Kraken Lord sleeping beneath the harbor.</p>
+            </div>'''
+        },
+        'sessions': {
+            'title': 'Session Archive', 
+            'content': '''<h3>📜 Session Notes</h3>
+            <div class="progress-tracker">
+                <h4>Campaign Progress</h4>
+                <ul>
+                    <li>✅ Session 1: Arrival in Shadowmar</li>
+                    <li>🔄 Session 2: The Rusty Anchor Investigation</li>
+                    <li>⏳ Session 3: Journey to Skull Island</li>
+                </ul>
+            </div>'''
+        },
+        'xylos': {
+            'title': 'The Drowned City of Xylos',
+            'content': '''<h3>🏛️ The Drowned City</h3>
+            <div class="location-grid">
+                <div class="location-card">
+                    <h4>The Sunken Plaza</h4>
+                    <p>Once the heart of the great city, now home to merrow and sea devils.</p>
+                </div>
+                <div class="location-card">
+                    <h4>The Broken Spires</h4>
+                    <p>Twisted towers reaching toward the surface, filled with ancient magic.</p>
+                </div>
+            </div>'''
+        },
+        'npcs': {
+            'title': 'NPCs of Xylos',
+            'content': '''<h3>👥 Important Characters</h3>
+            <div class="npc-card friendly">
+                <h3>Captain Blackwater</h3>
+                <p><strong>Race:</strong> Human | <strong>Alignment:</strong> Chaotic Neutral</p>
+                <p>Grizzled sea captain with knowledge of the ancient ruins beneath Shadowmar.</p>
+            </div>
+            <div class="npc-card neutral">
+                <h3>Tavern Keeper Martha</h3>
+                <p><strong>Race:</strong> Halfling | <strong>Alignment:</strong> Lawful Good</p>
+                <p>Knows everyone's secrets but keeps them... for a price.</p>
+            </div>'''
+        },
+        'encounters': {
+            'title': 'Encounters & Combat',
+            'content': '''<h3>⚔️ Combat Encounters</h3>
+            <div class="encounter-box">
+                <h4>Harbor Ambush</h4>
+                <p><strong>Difficulty:</strong> Medium (CR 3-4)</p>
+                <div class="enemy-grid">
+                    <div class="enemy-card">
+                        <h4>Sahuagin Raiders (3)</h4>
+                        <p>HP: 22 | AC: 12 | Attacks: Spear +3 (1d6+1)</p>
+                    </div>
+                    <div class="enemy-card">
+                        <h4>Sahuagin Priestess (1)</h4>
+                        <p>HP: 33 | AC: 12 | Spells: Hold Person, Spiritual Weapon</p>
+                    </div>
+                </div>
+            </div>'''
+        },
+        'lore': {
+            'title': 'World Lore & Secrets',
+            'content': '''<h3>📚 Ancient Secrets</h3>
+            <div class="lore-section">
+                <h4>The Sundering of Xylos</h4>
+                <p>Three hundred years ago, the great city of Xylos defied the sea gods...</p>
+            </div>
+            <div class="oracle-box">
+                <h4>The Oracle's Prophecy</h4>
+                <p><em>"When the blood of kings mingles with the tide, the drowned shall rise and the deep shall divide."</em></p>
+            </div>'''
+        },
+        'tools': {
+            'title': 'DM Tools & Reference',
+            'content': '''<h3>🔧 Quick Reference</h3>
+            <div class="dc-table">
+                <h4>Difficulty Classes</h4>
+                <p>Easy: 10 | Medium: 15 | Hard: 20 | Very Hard: 25</p>
+            </div>
+            <div class="encounter-table">
+                <h4>Random Encounters (Roll d6)</h4>
+                <p>1-2: Merchant vessel<br>3-4: Pirate patrol<br>5: Sea monster<br>6: Mysterious fog</p>
+            </div>'''
+        }
+    }
+    
+    if section in dm_book_content:
+        return jsonify(dm_book_content[section])
+    else:
+        return jsonify({'error': 'Section not found'}), 404
+
+@app.route('/api/dm/book/<section>', methods=['PUT'])
+def update_dm_book_section(section):
+    if 'user_id' not in session or session['role'] != 'dm':
+        return jsonify({'error': 'Not authorized'}), 403
+    
+    data = request.get_json()
+    # For now, just return success (you can add database saving later)
+    return jsonify({'success': True})
+
+# Combat API endpoints
+@app.route('/api/combat/state')
+def get_combat_state():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    # Return default combat state
+    combat_state = {
+        'active': False,
+        'round': 1,
+        'current_turn': 0,
+        'combatants': [],
+        'initiative_order': []
+    }
+    return jsonify(combat_state)
+
+@app.route('/api/combat/start', methods=['POST'])
+def start_combat():
+    if 'user_id' not in session or session['role'] != 'dm':
+        return jsonify({'error': 'Not authorized'}), 403
+    
+    data = request.get_json()
+    combatants = data.get('combatants', [])
+    
+    combat_state = {
+        'active': True,
+        'round': 1,
+        'current_turn': 0,
+        'combatants': sorted(combatants, key=lambda x: x.get('initiative', 0), reverse=True),
+        'initiative_order': [c['id'] for c in sorted(combatants, key=lambda x: x.get('initiative', 0), reverse=True)]
+    }
+    
+    socketio.emit('combat_started', combat_state, room='campaign')
+    return jsonify({'success': True, 'combat_state': combat_state})
+
+@app.route('/api/combat/end', methods=['POST'])
+def end_combat():
+    if 'user_id' not in session or session['role'] != 'dm':
+        return jsonify({'error': 'Not authorized'}), 403
+    
+    socketio.emit('combat_ended', room='campaign')
+    return jsonify({'success': True})
+
+@app.route('/api/combat/next-turn', methods=['POST'])
+def next_turn():
+    if 'user_id' not in session or session['role'] != 'dm':
+        return jsonify({'error': 'Not authorized'}), 403
+    
+    # Simplified next turn logic
+    socketio.emit('combat_turn_changed', {'round': 1, 'current_turn': 0}, room='campaign')
+    return jsonify({'success': True})
+
+@app.route('/api/combat/update-hp', methods=['POST'])
+def update_combat_hp():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    data = request.get_json()
+    char_id = data.get('character_id')
+    new_hp = data.get('hp')
+    
+    # Update character HP in database
+    conn = get_db_connection()
+    conn.execute('UPDATE characters SET hp_current = ? WHERE id = ?', (new_hp, char_id))
+    conn.commit()
+    conn.close()
+    
+    socketio.emit('hp_updated', {
+        'character_id': char_id,
+        'hp': new_hp,
+        'updated_by': session['username']
+    }, room='campaign')
+    
+    return jsonify({'success': True})
+
+# Battle Map routes
+@app.route('/battlemap')
+def battlemap():
+    """Separate window for battle map display"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('battlemap.html')
+
+@app.route('/api/battlemap/state')
+def get_battlemap_state():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    battle_map_state = {
+        'width': 30,
+        'height': 20,
+        'grid_size': 50,
+        'tokens': {},
+        'fog_of_war': {},
+        'background_image': None,
+        'walls': [],
+        'lighting': {}
+    }
+    return jsonify(battle_map_state)
+
+@app.route('/api/battlemap/move-token', methods=['POST'])
+def move_token():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    data = request.get_json()
+    token_id = data.get('token_id')
+    x = data.get('x')
+    y = data.get('y')
+    
+    # Update character position in database
+    conn = get_db_connection()
+    conn.execute('UPDATE characters SET token_x = ?, token_y = ? WHERE id = ?', (x, y, token_id))
+    conn.commit()
+    conn.close()
+    
+    socketio.emit('token_moved', {
+        'token_id': token_id,
+        'x': x,
+        'y': y,
+        'moved_by': session['username']
+    }, room='campaign')
+    
+    return jsonify({'success': True})
+
+# Secret Messages
+@app.route('/api/secret-message', methods=['POST'])
+def send_secret_message():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    data = request.get_json()
+    recipient = data.get('recipient')
+    message = data.get('message')
+    
+    if not recipient or not message:
+        return jsonify({'error': 'Recipient and message required'}), 400
+    
+    # Send to recipient via socket
+    socketio.emit('secret_message', {
+        'sender': session['username'],
+        'message': message,
+        'timestamp': datetime.now().isoformat()
+    }, room=f'user_{recipient}')
+    
+    return jsonify({'success': True})
