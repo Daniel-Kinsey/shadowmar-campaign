@@ -13,6 +13,32 @@ let dragOffset = { x: 0, y: 0 };
 let currentSection = 'overview';
 let editingChapter = false;
 
+// Character sheet variables
+let currentCharacterSheet = null;
+let isEditingSheet = false;
+
+// Skill to ability mapping
+const skillAbilityMap = {
+    'acrobatics': 'dexterity',
+    'animal-handling': 'wisdom',
+    'arcana': 'intelligence',
+    'athletics': 'strength',
+    'deception': 'charisma',
+    'history': 'intelligence',
+    'insight': 'wisdom',
+    'intimidation': 'charisma',
+    'investigation': 'intelligence',
+    'medicine': 'wisdom',
+    'nature': 'intelligence',
+    'perception': 'wisdom',
+    'performance': 'charisma',
+    'persuasion': 'charisma',
+    'religion': 'intelligence',
+    'sleight-of-hand': 'dexterity',
+    'stealth': 'dexterity',
+    'survival': 'wisdom'
+};
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     currentUser = {
@@ -22,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     initializeSocket();
     initializeEventListeners();
+    initializeCharacterSheet();
     loadInitialData();
     initializeBattleMap();
     
@@ -30,6 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('dm-combat-controls').style.display = 'flex';
         document.getElementById('dm-book-edit-controls').style.display = 'flex';
     }
+    
+    enhanceAddCharacterButton();
 });
 
 // Socket.IO initialization
@@ -54,7 +83,11 @@ function initializeSocket() {
         loadCharacters();
         updateCombatDisplay();
         updateBattleMapTokens();
-        showNotification(`Character updated by ${data.updated_by}`, 'info');
+        if (data.action === 'delete') {
+            showNotification(`${data.character_name} deleted by ${data.deleted_by}`, 'info');
+        } else {
+            showNotification(`Character updated by ${data.updated_by}`, 'info');
+        }
     });
     
     socket.on('campaign_update', (data) => {
@@ -131,10 +164,6 @@ function initializeEventListeners() {
     });
     
     // Character management
-    document.getElementById('add-character-btn').addEventListener('click', () => {
-        openCharacterModal();
-    });
-    
     document.getElementById('save-character').addEventListener('click', saveCharacter);
     document.getElementById('cancel-character').addEventListener('click', closeCharacterModal);
     
@@ -228,10 +257,471 @@ function initializeEventListeners() {
     
     // Battle map mouse events
     const canvas = document.getElementById('battlemap-canvas');
-    canvas.addEventListener('mousedown', handleBattleMapMouseDown);
-    canvas.addEventListener('mousemove', handleBattleMapMouseMove);
-    canvas.addEventListener('mouseup', handleBattleMapMouseUp);
-    canvas.addEventListener('contextmenu', (e) => e.preventDefault()); // Disable right-click menu
+    if (canvas) {
+        canvas.addEventListener('mousedown', handleBattleMapMouseDown);
+        canvas.addEventListener('mousemove', handleBattleMapMouseMove);
+        canvas.addEventListener('mouseup', handleBattleMapMouseUp);
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+}
+
+// Character Sheet System
+function initializeCharacterSheet() {
+    // Character sheet event listeners
+    document.getElementById('save-character-sheet').addEventListener('click', saveCharacterSheet);
+    document.getElementById('cancel-character-sheet').addEventListener('click', closeCharacterSheet);
+    document.getElementById('delete-character-btn').addEventListener('click', confirmDeleteCharacter);
+    
+    // Ability score change listeners
+    ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].forEach(ability => {
+        const input = document.getElementById(`sheet-${ability}`);
+        if (input) {
+            input.addEventListener('input', () => updateModifiers());
+        }
+    });
+    
+    // Proficiency bonus and level change listeners
+    const profInput = document.getElementById('sheet-proficiency');
+    const levelInput = document.getElementById('sheet-level');
+    if (profInput) profInput.addEventListener('input', () => updateModifiers());
+    if (levelInput) levelInput.addEventListener('change', updateProficiencyBonus);
+    
+    // Skill and save proficiency listeners
+    document.querySelectorAll('.save-checkbox, .skill-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', () => updateModifiers());
+    });
+    
+    setTimeout(() => {
+        addQuickRollListeners();
+    }, 1000);
+}
+
+// Calculate ability modifier
+function getAbilityModifier(score) {
+    return Math.floor((score - 10) / 2);
+}
+
+// Update all modifiers and dependent values
+function updateModifiers() {
+    const abilities = {
+        strength: parseInt(document.getElementById('sheet-strength').value) || 10,
+        dexterity: parseInt(document.getElementById('sheet-dexterity').value) || 10,
+        constitution: parseInt(document.getElementById('sheet-constitution').value) || 10,
+        intelligence: parseInt(document.getElementById('sheet-intelligence').value) || 10,
+        wisdom: parseInt(document.getElementById('sheet-wisdom').value) || 10,
+        charisma: parseInt(document.getElementById('sheet-charisma').value) || 10
+    };
+    
+    const proficiencyBonus = parseInt(document.getElementById('sheet-proficiency').value) || 2;
+    
+    // Update ability modifiers
+    Object.entries(abilities).forEach(([ability, score]) => {
+        const modifier = getAbilityModifier(score);
+        const modElement = document.getElementById(`${ability.substring(0, 3)}-modifier`);
+        if (modElement) {
+            modElement.textContent = modifier >= 0 ? `+${modifier}` : `${modifier}`;
+        }
+    });
+    
+    // Update saving throws
+    Object.entries(abilities).forEach(([ability, score]) => {
+        const modifier = getAbilityModifier(score);
+        const isProficient = document.getElementById(`save-${ability.substring(0, 3)}-prof`).checked;
+        const total = modifier + (isProficient ? proficiencyBonus : 0);
+        const saveElement = document.getElementById(`save-${ability.substring(0, 3)}`);
+        if (saveElement) {
+            saveElement.textContent = total >= 0 ? `+${total}` : `${total}`;
+        }
+    });
+    
+    // Update skills
+    Object.entries(skillAbilityMap).forEach(([skill, ability]) => {
+        const abilityScore = abilities[ability];
+        const modifier = getAbilityModifier(abilityScore);
+        const isProficient = document.getElementById(`skill-${skill}`).checked;
+        const total = modifier + (isProficient ? proficiencyBonus : 0);
+        const skillElement = document.getElementById(`skill-${skill}-mod`);
+        if (skillElement) {
+            skillElement.textContent = total >= 0 ? `+${total}` : `${total}`;
+        }
+    });
+    
+    // Update initiative (Dex modifier)
+    const dexModifier = getAbilityModifier(abilities.dexterity);
+    document.getElementById('sheet-initiative').value = dexModifier;
+}
+
+// Auto-calculate proficiency bonus based on level
+function updateProficiencyBonus() {
+    const level = parseInt(document.getElementById('sheet-level').value) || 1;
+    const proficiencyBonus = Math.ceil(level / 4) + 1; // D&D 5e proficiency progression
+    document.getElementById('sheet-proficiency').value = proficiencyBonus;
+    updateModifiers();
+}
+
+// Open character sheet
+async function openCharacterSheet(characterId = null) {
+    currentCharacterSheet = characterId;
+    isEditingSheet = characterId !== null;
+    
+    const modal = document.getElementById('character-sheet-modal');
+    const title = document.getElementById('character-sheet-title');
+    const deleteBtn = document.getElementById('delete-character-btn');
+    
+    if (isEditingSheet) {
+        title.textContent = 'Character Sheet';
+        deleteBtn.style.display = 'inline-block';
+        
+        try {
+            const response = await fetch(`/api/characters/${characterId}/sheet`);
+            const character = await response.json();
+            
+            if (response.ok) {
+                populateCharacterSheet(character);
+            } else {
+                showNotification('Failed to load character sheet', 'error');
+                return;
+            }
+        } catch (error) {
+            console.error('Error loading character sheet:', error);
+            showNotification('Failed to load character sheet', 'error');
+            return;
+        }
+    } else {
+        title.textContent = 'Create New Character';
+        deleteBtn.style.display = 'none';
+        clearCharacterSheet();
+    }
+    
+    modal.style.display = 'block';
+    setTimeout(() => {
+        updateModifiers();
+        addQuickRollListeners();
+    }, 100);
+}
+
+// Populate character sheet with data
+function populateCharacterSheet(character) {
+    // Basic info
+    document.getElementById('sheet-char-name').value = character.name || '';
+    document.getElementById('sheet-class').value = character.class || '';
+    document.getElementById('sheet-level').value = character.level || 1;
+    document.getElementById('sheet-race').value = character.race || '';
+    document.getElementById('sheet-background').value = character.background || '';
+    document.getElementById('sheet-alignment').value = character.alignment || '';
+    
+    // Ability scores
+    document.getElementById('sheet-strength').value = character.strength || 10;
+    document.getElementById('sheet-dexterity').value = character.dexterity || 10;
+    document.getElementById('sheet-constitution').value = character.constitution || 10;
+    document.getElementById('sheet-intelligence').value = character.intelligence || 10;
+    document.getElementById('sheet-wisdom').value = character.wisdom || 10;
+    document.getElementById('sheet-charisma').value = character.charisma || 10;
+    
+    // Combat stats
+    document.getElementById('sheet-ac').value = character.ac || 10;
+    document.getElementById('sheet-initiative').value = character.initiative || 0;
+    document.getElementById('sheet-speed').value = character.speed || 30;
+    
+    // Hit points
+    document.getElementById('sheet-hp-max').value = character.hp_max || 10;
+    document.getElementById('sheet-hp-current').value = character.hp_current || 10;
+    document.getElementById('sheet-hp-temp').value = 0;
+    
+    // Other stats
+    document.getElementById('sheet-inspiration').value = character.inspiration || 0;
+    document.getElementById('sheet-proficiency').value = character.proficiency_bonus || 2;
+    
+    // Text areas
+    document.getElementById('sheet-attacks').value = character.attacks_spells || '';
+    document.getElementById('sheet-equipment').value = character.equipment || '';
+    document.getElementById('sheet-languages').value = character.languages || '';
+    document.getElementById('sheet-features').value = character.features_traits || '';
+    document.getElementById('sheet-personality').value = character.personality_traits || '';
+    document.getElementById('sheet-ideals').value = character.ideals || '';
+    document.getElementById('sheet-bonds').value = character.bonds || '';
+    document.getElementById('sheet-flaws').value = character.flaws || '';
+    
+    // Skills and saves proficiencies
+    const skills = character.skills || {};
+    const saves = character.saving_throws || {};
+    
+    Object.keys(skillAbilityMap).forEach(skill => {
+        const checkbox = document.getElementById(`skill-${skill}`);
+        if (checkbox) {
+            checkbox.checked = skills[skill] || false;
+        }
+    });
+    
+    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(save => {
+        const checkbox = document.getElementById(`save-${save}-prof`);
+        if (checkbox) {
+            checkbox.checked = saves[save] || false;
+        }
+    });
+}
+
+// Clear character sheet for new character
+function clearCharacterSheet() {
+    // Basic info
+    document.getElementById('sheet-char-name').value = '';
+    document.getElementById('sheet-class').value = '';
+    document.getElementById('sheet-level').value = 1;
+    document.getElementById('sheet-race').value = '';
+    document.getElementById('sheet-background').value = '';
+    document.getElementById('sheet-alignment').value = '';
+    
+    // Ability scores - set to default 10
+    ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].forEach(ability => {
+        document.getElementById(`sheet-${ability}`).value = 10;
+    });
+    
+    // Combat stats
+    document.getElementById('sheet-ac').value = 10;
+    document.getElementById('sheet-initiative').value = 0;
+    document.getElementById('sheet-speed').value = 30;
+    
+    // Hit points
+    document.getElementById('sheet-hp-max').value = 10;
+    document.getElementById('sheet-hp-current').value = 10;
+    document.getElementById('sheet-hp-temp').value = 0;
+    
+    // Other stats
+    document.getElementById('sheet-inspiration').value = 0;
+    document.getElementById('sheet-proficiency').value = 2;
+    
+    // Text areas
+    document.getElementById('sheet-attacks').value = '';
+    document.getElementById('sheet-equipment').value = '';
+    document.getElementById('sheet-languages').value = '';
+    document.getElementById('sheet-features').value = '';
+    document.getElementById('sheet-personality').value = '';
+    document.getElementById('sheet-ideals').value = '';
+    document.getElementById('sheet-bonds').value = '';
+    document.getElementById('sheet-flaws').value = '';
+    
+    // Clear all checkboxes
+    document.querySelectorAll('.save-checkbox, .skill-checkbox, .death-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+}
+
+// Save character sheet
+async function saveCharacterSheet() {
+    const characterData = gatherCharacterData();
+    
+    if (!characterData.name.trim()) {
+        showNotification('Character name is required', 'warning');
+        return;
+    }
+    
+    try {
+        let response;
+        if (isEditingSheet) {
+            response = await fetch(`/api/characters/${currentCharacterSheet}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(characterData)
+            });
+        } else {
+            response = await fetch('/api/characters', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(characterData)
+            });
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            closeCharacterSheet();
+            loadCharacters();
+            showNotification('Character saved successfully', 'success');
+        } else {
+            showNotification('Failed to save character', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving character:', error);
+        showNotification('Failed to save character', 'error');
+    }
+}
+
+// Gather all character data from the form
+function gatherCharacterData() {
+    // Gather skills proficiencies
+    const skills = {};
+    Object.keys(skillAbilityMap).forEach(skill => {
+        const checkbox = document.getElementById(`skill-${skill}`);
+        if (checkbox) {
+            skills[skill] = checkbox.checked;
+        }
+    });
+    
+    // Gather saving throw proficiencies
+    const savingThrows = {};
+    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(save => {
+        const checkbox = document.getElementById(`save-${save}-prof`);
+        if (checkbox) {
+            savingThrows[save] = checkbox.checked;
+        }
+    });
+    
+    return {
+        name: document.getElementById('sheet-char-name').value,
+        class: document.getElementById('sheet-class').value,
+        race: document.getElementById('sheet-race').value,
+        background: document.getElementById('sheet-background').value,
+        level: parseInt(document.getElementById('sheet-level').value) || 1,
+        alignment: document.getElementById('sheet-alignment').value,
+        
+        // Ability scores
+        strength: parseInt(document.getElementById('sheet-strength').value) || 10,
+        dexterity: parseInt(document.getElementById('sheet-dexterity').value) || 10,
+        constitution: parseInt(document.getElementById('sheet-constitution').value) || 10,
+        intelligence: parseInt(document.getElementById('sheet-intelligence').value) || 10,
+        wisdom: parseInt(document.getElementById('sheet-wisdom').value) || 10,
+        charisma: parseInt(document.getElementById('sheet-charisma').value) || 10,
+        
+        // Combat stats
+        hp_current: parseInt(document.getElementById('sheet-hp-current').value) || 10,
+        hp_max: parseInt(document.getElementById('sheet-hp-max').value) || 10,
+        ac: parseInt(document.getElementById('sheet-ac').value) || 10,
+        speed: parseInt(document.getElementById('sheet-speed').value) || 30,
+        initiative: parseInt(document.getElementById('sheet-initiative').value) || 0,
+        
+        // Other stats
+        inspiration: parseInt(document.getElementById('sheet-inspiration').value) || 0,
+        proficiency_bonus: parseInt(document.getElementById('sheet-proficiency').value) || 2,
+        
+        // Text fields
+        attacks_spells: document.getElementById('sheet-attacks').value,
+        equipment: document.getElementById('sheet-equipment').value,
+        languages: document.getElementById('sheet-languages').value,
+        proficiencies: document.getElementById('sheet-languages').value, // Combine for now
+        features_traits: document.getElementById('sheet-features').value,
+        personality_traits: document.getElementById('sheet-personality').value,
+        ideals: document.getElementById('sheet-ideals').value,
+        bonds: document.getElementById('sheet-bonds').value,
+        flaws: document.getElementById('sheet-flaws').value,
+        
+        // Proficiencies
+        skills: skills,
+        saving_throws: savingThrows,
+        
+        // Additional fields
+        stats: {},
+        spell_slots: {},
+        status_effects: [],
+        notes: ''
+    };
+}
+
+// Close character sheet
+function closeCharacterSheet() {
+    document.getElementById('character-sheet-modal').style.display = 'none';
+    currentCharacterSheet = null;
+    isEditingSheet = false;
+}
+
+// Delete character functionality
+function deleteCharacter(characterId, characterName) {
+    if (confirm(`Are you sure you want to delete "${characterName}"? This action cannot be undone.`)) {
+        performDeleteCharacter(characterId);
+    }
+}
+
+function confirmDeleteCharacter() {
+    if (currentCharacterSheet) {
+        const characterName = document.getElementById('sheet-char-name').value || 'this character';
+        if (confirm(`Are you sure you want to delete "${characterName}"? This action cannot be undone.`)) {
+            performDeleteCharacter(currentCharacterSheet);
+        }
+    }
+}
+
+async function performDeleteCharacter(characterId) {
+    try {
+        const response = await fetch(`/api/characters/${characterId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            closeCharacterSheet();
+            loadCharacters();
+            showNotification('Character deleted successfully', 'success');
+        } else {
+            showNotification('Failed to delete character', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting character:', error);
+        showNotification('Failed to delete character', 'error');
+    }
+}
+
+// Quick roll functions
+function rollSkill(skillName) {
+    const skillElement = document.getElementById(`skill-${skillName}-mod`);
+    if (skillElement) {
+        const modifier = parseInt(skillElement.textContent) || 0;
+        const characterName = document.getElementById('sheet-char-name').value || 'Character';
+        
+        socket.emit('dice_roll', {
+            dice: 'd20',
+            modifier: modifier,
+            reason: `${skillName.replace('-', ' ')} check for ${characterName}`
+        });
+    }
+}
+
+function rollSave(saveAbility) {
+    const saveElement = document.getElementById(`save-${saveAbility}`);
+    if (saveElement) {
+        const modifier = parseInt(saveElement.textContent) || 0;
+        const characterName = document.getElementById('sheet-char-name').value || 'Character';
+        const abilityNames = {
+            'str': 'Strength',
+            'dex': 'Dexterity', 
+            'con': 'Constitution',
+            'int': 'Intelligence',
+            'wis': 'Wisdom',
+            'cha': 'Charisma'
+        };
+        
+        socket.emit('dice_roll', {
+            dice: 'd20',
+            modifier: modifier,
+            reason: `${abilityNames[saveAbility]} save for ${characterName}`
+        });
+    }
+}
+
+// Add click listeners for quick rolls
+function addQuickRollListeners() {
+    // Add click listeners to skill modifiers
+    document.querySelectorAll('.skill-modifier').forEach(element => {
+        const skillName = element.id.replace('skill-', '').replace('-mod', '');
+        element.style.cursor = 'pointer';
+        element.title = `Click to roll ${skillName.replace('-', ' ')}`;
+        element.addEventListener('click', () => rollSkill(skillName));
+    });
+    
+    // Add click listeners to save modifiers
+    document.querySelectorAll('.save-modifier').forEach(element => {
+        const saveAbility = element.id.replace('save-', '');
+        element.style.cursor = 'pointer';
+        element.title = `Click to roll ${saveAbility} save`;
+        element.addEventListener('click', () => rollSave(saveAbility));
+    });
+}
+
+// Enhanced add character button functionality
+function enhanceAddCharacterButton() {
+    const addCharacterBtn = document.getElementById('add-character-btn');
+    if (addCharacterBtn) {
+        addCharacterBtn.onclick = () => openCharacterSheet();
+    }
 }
 
 // Tab switching
@@ -250,33 +740,7 @@ function switchTab(tabName) {
     document.getElementById(`${tabName}-tab`).classList.add('active');
     document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
     
-    // Load data if needed
-    switch(tabName) {
-        case 'characters':
-            loadCharacters();
-            break;
-        case 'campaign':
-            loadCampaignData();
-            break;
-        case 'chat':
-            loadMessages();
-            break;
-        case 'files':
-            loadFiles();
-            break;
-        case 'combat':
-            loadCombatState();
-            break;
-        case 'battlemap':
-            renderBattleMap();
-            break;
-        case 'dm-book':
-            loadDMBookSection(currentSection);
-            break;
-    }
-}
-
-// Load initial data
+    // Load initial data
 async function loadInitialData() {
     await loadCharacters();
     await loadCampaignData();
@@ -325,11 +789,15 @@ function createCharacterCard(character) {
     const statusEffectsHtml = statusEffects.length > 0 ? 
         `<div class="status-effects">Status: ${statusEffects.join(', ')}</div>` : '';
     
+    // Check if user can delete this character
+    const canDelete = currentUser.role === 'dm' || character.user_id === currentUser.id;
+    const canEdit = currentUser.role === 'dm' || character.user_id === currentUser.id;
+    
     div.innerHTML = `
         <div class="character-header">
             <div>
                 <div class="character-name">${character.name}</div>
-                <div class="character-class">${character.class || 'Unknown Class'} - Level ${character.level}</div>
+                <div class="character-class">${character.class || 'Unknown Class'} ${character.race ? `(${character.race})` : ''} - Level ${character.level}</div>
                 ${character.username ? `<div class="character-player">Player: ${character.username}</div>` : ''}
             </div>
         </div>
@@ -338,7 +806,10 @@ function createCharacterCard(character) {
             <div class="stat-item">
                 <span class="stat-label">HP</span>
                 <span class="stat-value hp-tracker" data-char-id="${character.id}">
-                    <input type="number" class="hp-input" value="${character.hp_current}" min="0" max="${character.hp_max}" data-char-id="${character.id}">
+                    ${canEdit ? 
+                        `<input type="number" class="hp-input" value="${character.hp_current}" min="0" max="${character.hp_max}" data-char-id="${character.id}">` :
+                        character.hp_current
+                    }
                     /${character.hp_max}
                 </span>
             </div>
@@ -348,26 +819,29 @@ function createCharacterCard(character) {
             </div>
             <div class="stat-item">
                 <span class="stat-label">Speed</span>
-                <span class="stat-value">${character.speed}ft</span>
+                <span class="stat-value">${character.speed || 30}ft</span>
             </div>
         </div>
         
         ${statusEffectsHtml}
         
-        ${character.notes ? `<div class="character-notes">${character.notes}</div>` : ''}
-        
         <div class="character-controls">
-            <button class="btn btn-small btn-primary" onclick="editCharacter(${character.id})">Edit</button>
-            <button class="btn btn-small btn-secondary" onclick="duplicateCharacter(${character.id})">Duplicate</button>
+            <button class="btn btn-small btn-primary" onclick="openCharacterSheet(${character.id})">📋 View Sheet</button>
+            ${canEdit ? `<button class="btn btn-small btn-secondary" onclick="editCharacter(${character.id})">✏️ Quick Edit</button>` : ''}
+            ${canDelete ? `<button class="btn btn-small btn-danger" onclick="deleteCharacter(${character.id}, '${character.name.replace(/'/g, "\\'")}')">🗑️ Delete</button>` : ''}
             ${character.in_combat ? '<span class="combat-indicator">⚔️ In Combat</span>' : ''}
         </div>
     `;
     
-    // Add HP change listeners
-    const hpInput = div.querySelector('.hp-input');
-    hpInput.addEventListener('change', (e) => {
-        updateCharacterHP(character.id, parseInt(e.target.value));
-    });
+    // Add HP change listeners only if user can edit
+    if (canEdit) {
+        const hpInput = div.querySelector('.hp-input');
+        if (hpInput) {
+            hpInput.addEventListener('change', (e) => {
+                updateCharacterHP(character.id, parseInt(e.target.value));
+            });
+        }
+    }
     
     return div;
 }
@@ -588,6 +1062,8 @@ function updateCombatDisplay() {
 
 function updatePlayerCombatSheet() {
     const playerSheet = document.getElementById('player-character-stats');
+    if (!playerSheet) return;
+    
     const playerCharacters = characters.filter(c => c.user_id === currentUser.id);
     
     if (playerCharacters.length === 0) {
@@ -624,7 +1100,7 @@ function updatePlayerCombatSheet() {
                     <span>AC:</span> <span>${character.ac}</span>
                 </div>
                 <div class="stat-row">
-                    <span>Speed:</span> <span>${character.speed}ft</span>
+                    <span>Speed:</span> <span>${character.speed || 30}ft</span>
                 </div>
                 ${statusEffects.length > 0 ? 
                     `<div class="stat-row"><span>Status:</span> <span>${statusEffects.join(', ')}</span></div>` : 
@@ -804,6 +1280,8 @@ async function nextTurn() {
 // Battle Map System
 function initializeBattleMap() {
     const canvas = document.getElementById('battlemap-canvas');
+    if (!canvas) return;
+    
     battleMapState = {
         width: 30,
         height: 20,
@@ -823,8 +1301,11 @@ function initializeBattleMap() {
 
 function renderBattleMap() {
     const canvas = document.getElementById('battlemap-canvas');
+    if (!canvas) return;
+    
     const ctx = canvas.getContext('2d');
     const tokensContainer = document.getElementById('battlemap-tokens');
+    if (!tokensContainer) return;
     
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -874,6 +1355,8 @@ function drawGrid(ctx) {
 
 function createTokenElement(tokenId, token) {
     const tokensContainer = document.getElementById('battlemap-tokens');
+    if (!tokensContainer) return;
+    
     const tokenElement = document.createElement('div');
     tokenElement.className = 'battle-token';
     tokenElement.dataset.tokenId = tokenId;
@@ -1034,16 +1517,18 @@ function selectTool(tool) {
     
     // Update cursor
     const canvas = document.getElementById('battlemap-canvas');
-    switch(tool) {
-        case 'select':
-            canvas.style.cursor = 'default';
-            break;
-        case 'move':
-            canvas.style.cursor = 'grab';
-            break;
-        case 'measure':
-            canvas.style.cursor = 'crosshair';
-            break;
+    if (canvas) {
+        switch(tool) {
+            case 'select':
+                canvas.style.cursor = 'default';
+                break;
+            case 'move':
+                canvas.style.cursor = 'grab';
+                break;
+            case 'measure':
+                canvas.style.cursor = 'crosshair';
+                break;
+        }
     }
 }
 
@@ -1060,6 +1545,8 @@ function centerMap() {
 
 function updateTokenList() {
     const tokenList = document.getElementById('token-list-items');
+    if (!tokenList) return;
+    
     tokenList.innerHTML = '';
     
     Object.entries(battleMapState.tokens).forEach(([tokenId, token]) => {
@@ -1091,6 +1578,8 @@ async function loadUsersList() {
         const chars = await response.json();
         
         const select = document.getElementById('secret-recipient');
+        if (!select) return;
+        
         select.innerHTML = '<option value="">Select recipient...</option>';
         
         // Get unique usernames
@@ -1552,594 +2041,37 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Character sheet variables
-let currentCharacterSheet = null;
-let isEditingSheet = false;
-
-// Skill to ability mapping
-const skillAbilityMap = {
-    'acrobatics': 'dexterity',
-    'animal-handling': 'wisdom',
-    'arcana': 'intelligence',
-    'athletics': 'strength',
-    'deception': 'charisma',
-    'history': 'intelligence',
-    'insight': 'wisdom',
-    'intimidation': 'charisma',
-    'investigation': 'intelligence',
-    'medicine': 'wisdom',
-    'nature': 'intelligence',
-    'perception': 'wisdom',
-    'performance': 'charisma',
-    'persuasion': 'charisma',
-    'religion': 'intelligence',
-    'sleight-of-hand': 'dexterity',
-    'stealth': 'dexterity',
-    'survival': 'wisdom'
-};
-
-// Initialize character sheet functionality
-function initializeCharacterSheet() {
-    // Character sheet event listeners
-    document.getElementById('save-character-sheet').addEventListener('click', saveCharacterSheet);
-    document.getElementById('cancel-character-sheet').addEventListener('click', closeCharacterSheet);
-    document.getElementById('delete-character-btn').addEventListener('click', confirmDeleteCharacter);
-    
-    // Ability score change listeners
-    ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].forEach(ability => {
-        const input = document.getElementById(`sheet-${ability}`);
-        if (input) {
-            input.addEventListener('input', () => updateModifiers());
-        }
-    });
-}
-
-// Clear character sheet for new character
-function clearCharacterSheet() {
-    // Basic info
-    document.getElementById('sheet-char-name').value = '';
-    document.getElementById('sheet-class').value = '';
-    document.getElementById('sheet-level').value = 1;
-    document.getElementById('sheet-race').value = '';
-    document.getElementById('sheet-background').value = '';
-    document.getElementById('sheet-alignment').value = '';
-    
-    // Ability scores - set to default 10
-    ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].forEach(ability => {
-        document.getElementById(`sheet-${ability}`).value = 10;
-    });
-    
-    // Combat stats
-    document.getElementById('sheet-ac').value = 10;
-    document.getElementById('sheet-initiative').value = 0;
-    document.getElementById('sheet-speed').value = 30;
-    
-    // Hit points
-    document.getElementById('sheet-hp-max').value = 10;
-    document.getElementById('sheet-hp-current').value = 10;
-    document.getElementById('sheet-hp-temp').value = 0;
-    
-    // Other stats
-    document.getElementById('sheet-inspiration').value = 0;
-    document.getElementById('sheet-proficiency').value = 2;
-    
-    // Text areas
-    document.getElementById('sheet-attacks').value = '';
-    document.getElementById('sheet-equipment').value = '';
-    document.getElementById('sheet-languages').value = '';
-    document.getElementById('sheet-features').value = '';
-    document.getElementById('sheet-personality').value = '';
-    document.getElementById('sheet-ideals').value = '';
-    document.getElementById('sheet-bonds').value = '';
-    document.getElementById('sheet-flaws').value = '';
-    
-    // Clear all checkboxes
-    document.querySelectorAll('.save-checkbox, .skill-checkbox, .death-checkbox').forEach(checkbox => {
-        checkbox.checked = false;
-    });
-}
-
-// Save character sheet
-async function saveCharacterSheet() {
-    const characterData = gatherCharacterData();
-    
-    if (!characterData.name.trim()) {
-        showNotification('Character name is required', 'warning');
-        return;
-    }
-    
-    try {
-        let response;
-        if (isEditingSheet) {
-            response = await fetch(`/api/characters/${currentCharacterSheet}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(characterData)
-            });
-        } else {
-            response = await fetch('/api/characters', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(characterData)
-            });
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            closeCharacterSheet();
-            loadCharacters();
-            showNotification('Character saved successfully', 'success');
-        } else {
-            showNotification('Failed to save character', 'error');
-        }
-    } catch (error) {
-        console.error('Error saving character:', error);
-        showNotification('Failed to save character', 'error');
-    }
-}
-
-// Gather all character data from the form
-function gatherCharacterData() {
-    // Gather skills proficiencies
-    const skills = {};
-    Object.keys(skillAbilityMap).forEach(skill => {
-        const checkbox = document.getElementById(`skill-${skill}`);
-        if (checkbox) {
-            skills[skill] = checkbox.checked;
-        }
-    });
-    
-    // Gather saving throw proficiencies
-    const savingThrows = {};
-    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(save => {
-        const checkbox = document.getElementById(`save-${save}-prof`);
-        if (checkbox) {
-            savingThrows[save] = checkbox.checked;
-        }
-    });
-    
-    return {
-        name: document.getElementById('sheet-char-name').value,
-        class: document.getElementById('sheet-class').value,
-        race: document.getElementById('sheet-race').value,
-        background: document.getElementById('sheet-background').value,
-        level: parseInt(document.getElementById('sheet-level').value) || 1,
-        alignment: document.getElementById('sheet-alignment').value,
-        
-        // Ability scores
-        strength: parseInt(document.getElementById('sheet-strength').value) || 10,
-        dexterity: parseInt(document.getElementById('sheet-dexterity').value) || 10,
-        constitution: parseInt(document.getElementById('sheet-constitution').value) || 10,
-        intelligence: parseInt(document.getElementById('sheet-intelligence').value) || 10,
-        wisdom: parseInt(document.getElementById('sheet-wisdom').value) || 10,
-        charisma: parseInt(document.getElementById('sheet-charisma').value) || 10,
-        
-        // Combat stats
-        hp_current: parseInt(document.getElementById('sheet-hp-current').value) || 10,
-        hp_max: parseInt(document.getElementById('sheet-hp-max').value) || 10,
-        ac: parseInt(document.getElementById('sheet-ac').value) || 10,
-        speed: parseInt(document.getElementById('sheet-speed').value) || 30,
-        initiative: parseInt(document.getElementById('sheet-initiative').value) || 0,
-        
-        // Other stats
-        inspiration: parseInt(document.getElementById('sheet-inspiration').value) || 0,
-        proficiency_bonus: parseInt(document.getElementById('sheet-proficiency').value) || 2,
-        
-        // Text fields
-        attacks_spells: document.getElementById('sheet-attacks').value,
-        equipment: document.getElementById('sheet-equipment').value,
-        languages: document.getElementById('sheet-languages').value,
-        proficiencies: document.getElementById('sheet-languages').value, // Combine for now
-        features_traits: document.getElementById('sheet-features').value,
-        personality_traits: document.getElementById('sheet-personality').value,
-        ideals: document.getElementById('sheet-ideals').value,
-        bonds: document.getElementById('sheet-bonds').value,
-        flaws: document.getElementById('sheet-flaws').value,
-        
-        // Proficiencies
-        skills: skills,
-        saving_throws: savingThrows,
-        
-        // Additional fields
-        stats: {},
-        spell_slots: {},
-        status_effects: [],
-        notes: '' // Can be expanded later
-    };
-}
-
-// Close character sheet
-function closeCharacterSheet() {
-    document.getElementById('character-sheet-modal').style.display = 'none';
-    currentCharacterSheet = null;
-    isEditingSheet = false;
-}
-
-// Delete character functionality
-function deleteCharacter(characterId, characterName) {
-    if (confirm(`Are you sure you want to delete "${characterName}"? This action cannot be undone.`)) {
-        performDeleteCharacter(characterId);
-    }
-}
-
-function confirmDeleteCharacter() {
-    if (currentCharacterSheet) {
-        const characterName = document.getElementById('sheet-char-name').value || 'this character';
-        if (confirm(`Are you sure you want to delete "${characterName}"? This action cannot be undone.`)) {
-            performDeleteCharacter(currentCharacterSheet);
-        }
-    }
-}
-
-async function performDeleteCharacter(characterId) {
-    try {
-        const response = await fetch(`/api/characters/${characterId}`, {
-            method: 'DELETE'
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            closeCharacterSheet();
-            loadCharacters();
-            showNotification('Character deleted successfully', 'success');
-        } else {
-            showNotification('Failed to delete character', 'error');
-        }
-    } catch (error) {
-        console.error('Error deleting character:', error);
-        showNotification('Failed to delete character', 'error');
-    }
-}
-
-// Enhanced character card creation with new buttons
-function createCharacterCard(character) {
-    const div = document.createElement('div');
-    div.className = 'character-card';
-    
-    // Parse status effects if they exist
-    let statusEffects = [];
-    try {
-        statusEffects = character.status_effects ? JSON.parse(character.status_effects) : [];
-    } catch (e) {
-        statusEffects = [];
-    }
-    
-    const statusEffectsHtml = statusEffects.length > 0 ? 
-        `<div class="status-effects">Status: ${statusEffects.join(', ')}</div>` : '';
-    
-    // Check if user can delete this character
-    const canDelete = currentUser.role === 'dm' || character.user_id === currentUser.id;
-    const canEdit = currentUser.role === 'dm' || character.user_id === currentUser.id;
-    
-    div.innerHTML = `
-        <div class="character-header">
-            <div>
-                <div class="character-name">${character.name}</div>
-                <div class="character-class">${character.class || 'Unknown Class'} ${character.race ? `(${character.race})` : ''} - Level ${character.level}</div>
-                ${character.username ? `<div class="character-player">Player: ${character.username}</div>` : ''}
-            </div>
-        </div>
-        
-        <div class="character-stats">
-            <div class="stat-item">
-                <span class="stat-label">HP</span>
-                <span class="stat-value hp-tracker" data-char-id="${character.id}">
-                    ${canEdit ? 
-                        `<input type="number" class="hp-input" value="${character.hp_current}" min="0" max="${character.hp_max}" data-char-id="${character.id}">` :
-                        character.hp_current
-                    }
-                    /${character.hp_max}
-                </span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">AC</span>
-                <span class="stat-value">${character.ac}</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Speed</span>
-                <span class="stat-value">${character.speed || 30}ft</span>
-            </div>
-        </div>
-        
-        ${statusEffectsHtml}
-        
-        <div class="character-controls">
-            <button class="btn btn-small btn-primary" onclick="openCharacterSheet(${character.id})">📋 View Sheet</button>
-            ${canEdit ? `<button class="btn btn-small btn-secondary" onclick="editCharacter(${character.id})">✏️ Quick Edit</button>` : ''}
-            ${canDelete ? `<button class="btn btn-small btn-danger" onclick="deleteCharacter(${character.id}, '${character.name.replace(/'/g, "\\'")}')">🗑️ Delete</button>` : ''}
-            ${character.in_combat ? '<span class="combat-indicator">⚔️ In Combat</span>' : ''}
-        </div>
-    `;
-    
-    // Add HP change listeners only if user can edit
-    if (canEdit) {
-        const hpInput = div.querySelector('.hp-input');
-        if (hpInput) {
-            hpInput.addEventListener('change', (e) => {
-                updateCharacterHP(character.id, parseInt(e.target.value));
-            });
-        }
-    }
-    
-    return div;
-}
-
-// Enhanced add character button functionality
-function enhanceAddCharacterButton() {
-    const addCharacterBtn = document.getElementById('add-character-btn');
-    if (addCharacterBtn) {
-        addCharacterBtn.onclick = () => openCharacterSheet();
-        addCharacterBtn.innerHTML = '📋 Create Character Sheet';
-    }
-}
-
-// Auto-calculate modifiers on level change
-function updateProficiencyBonus() {
-    const level = parseInt(document.getElementById('sheet-level').value) || 1;
-    const proficiencyBonus = Math.ceil(level / 4) + 1; // D&D 5e proficiency progression
-    document.getElementById('sheet-proficiency').value = proficiencyBonus;
-    updateModifiers();
-}
-
-// Add level change listener
-function addLevelChangeListener() {
-    const levelInput = document.getElementById('sheet-level');
-    if (levelInput) {
-        levelInput.addEventListener('change', updateProficiencyBonus);
-    }
-}
-
-// Quick skill roll function
-function rollSkill(skillName) {
-    const skillElement = document.getElementById(`skill-${skillName}-mod`);
-    if (skillElement) {
-        const modifier = parseInt(skillElement.textContent) || 0;
-        const characterName = document.getElementById('sheet-char-name').value || 'Character';
-        
-        socket.emit('dice_roll', {
-            dice: 'd20',
-            modifier: modifier,
-            reason: `${skillName.replace('-', ' ')} check for ${characterName}`
-        });
-    }
-}
-
-// Quick save roll function
-function rollSave(saveAbility) {
-    const saveElement = document.getElementById(`save-${saveAbility}`);
-    if (saveElement) {
-        const modifier = parseInt(saveElement.textContent) || 0;
-        const characterName = document.getElementById('sheet-char-name').value || 'Character';
-        const abilityNames = {
-            'str': 'Strength',
-            'dex': 'Dexterity', 
-            'con': 'Constitution',
-            'int': 'Intelligence',
-            'wis': 'Wisdom',
-            'cha': 'Charisma'
-        };
-        
-        socket.emit('dice_roll', {
-            dice: 'd20',
-            modifier: modifier,
-            reason: `${abilityNames[saveAbility]} save for ${characterName}`
-        });
-    }
-}
-
-// Add click listeners for quick rolls
-function addQuickRollListeners() {
-    // Add click listeners to skill modifiers
-    document.querySelectorAll('.skill-modifier').forEach(element => {
-        const skillName = element.id.replace('skill-', '').replace('-mod', '');
-        element.style.cursor = 'pointer';
-        element.title = `Click to roll ${skillName.replace('-', ' ')}`;
-        element.addEventListener('click', () => rollSkill(skillName));
-    });
-    
-    // Add click listeners to save modifiers
-    document.querySelectorAll('.save-modifier').forEach(element => {
-        const saveAbility = element.id.replace('save-', '');
-        element.style.cursor = 'pointer';
-        element.title = `Click to roll ${saveAbility} save`;
-        element.addEventListener('click', () => rollSave(saveAbility));
-    });
-}
-
-// Initialize everything when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    initializeCharacterSheet();
-    enhanceAddCharacterButton();
-    
-    // Wait a bit for the modal to be in DOM, then add listeners
-    setTimeout(() => {
-        addLevelChangeListener();
-        addQuickRollListeners();
-    }, 1000);
-});
-
-// Call this function after opening a character sheet
-function setupCharacterSheetListeners() {
-    setTimeout(() => {
-        updateModifiers();
-        addQuickRollListeners();
-    }, 100);
-}
-
-// Update the openCharacterSheet function to include listener setup
-const originalOpenCharacterSheet = openCharacterSheet;
-openCharacterSheet = async function(characterId = null) {
-    await originalOpenCharacterSheet(characterId);
-    setupCharacterSheetListeners();
-};
-
-// Export functions for external use
+// Make functions globally available
 window.openCharacterSheet = openCharacterSheet;
 window.deleteCharacter = deleteCharacter;
+window.editCharacter = editCharacter;
+window.duplicateCharacter = duplicateCharacter;
+window.removeEnemy = removeEnemy;
 window.rollSkill = rollSkill;
-window.rollSave = rollSave;
-    
-    // Proficiency bonus change listener
-    const profInput = document.getElementById('sheet-proficiency');
-    if (profInput) {
-        profInput.addEventListener('input', () => updateModifiers());
+window.rollSave = rollSave;d data if needed
+    switch(tabName) {
+        case 'characters':
+            loadCharacters();
+            break;
+        case 'campaign':
+            loadCampaignData();
+            break;
+        case 'chat':
+            loadMessages();
+            break;
+        case 'files':
+            loadFiles();
+            break;
+        case 'combat':
+            loadCombatState();
+            break;
+        case 'battlemap':
+            renderBattleMap();
+            break;
+        case 'dm-book':
+            loadDMBookSection(currentSection);
+            break;
     }
-    
-    // Skill and save proficiency listeners
-    document.querySelectorAll('.save-checkbox, .skill-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', () => updateModifiers());
-    });
 }
 
-// Calculate ability modifier
-function getAbilityModifier(score) {
-    return Math.floor((score - 10) / 2);
-}
-
-// Update all modifiers and dependent values
-function updateModifiers() {
-    const abilities = {
-        strength: parseInt(document.getElementById('sheet-strength').value) || 10,
-        dexterity: parseInt(document.getElementById('sheet-dexterity').value) || 10,
-        constitution: parseInt(document.getElementById('sheet-constitution').value) || 10,
-        intelligence: parseInt(document.getElementById('sheet-intelligence').value) || 10,
-        wisdom: parseInt(document.getElementById('sheet-wisdom').value) || 10,
-        charisma: parseInt(document.getElementById('sheet-charisma').value) || 10
-    };
-    
-    const proficiencyBonus = parseInt(document.getElementById('sheet-proficiency').value) || 2;
-    
-    // Update ability modifiers
-    Object.entries(abilities).forEach(([ability, score]) => {
-        const modifier = getAbilityModifier(score);
-        const modElement = document.getElementById(`${ability.substring(0, 3)}-modifier`);
-        if (modElement) {
-            modElement.textContent = modifier >= 0 ? `+${modifier}` : `${modifier}`;
-        }
-    });
-    
-    // Update saving throws
-    Object.entries(abilities).forEach(([ability, score]) => {
-        const modifier = getAbilityModifier(score);
-        const isProficient = document.getElementById(`save-${ability.substring(0, 3)}-prof`).checked;
-        const total = modifier + (isProficient ? proficiencyBonus : 0);
-        const saveElement = document.getElementById(`save-${ability.substring(0, 3)}`);
-        if (saveElement) {
-            saveElement.textContent = total >= 0 ? `+${total}` : `${total}`;
-        }
-    });
-    
-    // Update skills
-    Object.entries(skillAbilityMap).forEach(([skill, ability]) => {
-        const abilityScore = abilities[ability];
-        const modifier = getAbilityModifier(abilityScore);
-        const isProficient = document.getElementById(`skill-${skill}`).checked;
-        const total = modifier + (isProficient ? proficiencyBonus : 0);
-        const skillElement = document.getElementById(`skill-${skill}-mod`);
-        if (skillElement) {
-            skillElement.textContent = total >= 0 ? `+${total}` : `${total}`;
-        }
-    });
-    
-    // Update initiative (Dex modifier)
-    const dexModifier = getAbilityModifier(abilities.dexterity);
-    document.getElementById('sheet-initiative').value = dexModifier;
-}
-
-// Open character sheet
-async function openCharacterSheet(characterId = null) {
-    currentCharacterSheet = characterId;
-    isEditingSheet = characterId !== null;
-    
-    const modal = document.getElementById('character-sheet-modal');
-    const title = document.getElementById('character-sheet-title');
-    const deleteBtn = document.getElementById('delete-character-btn');
-    
-    if (isEditingSheet) {
-        title.textContent = 'Character Sheet';
-        deleteBtn.style.display = 'inline-block';
-        
-        try {
-            const response = await fetch(`/api/characters/${characterId}/sheet`);
-            const character = await response.json();
-            
-            if (response.ok) {
-                populateCharacterSheet(character);
-            } else {
-                showNotification('Failed to load character sheet', 'error');
-                return;
-            }
-        } catch (error) {
-            console.error('Error loading character sheet:', error);
-            showNotification('Failed to load character sheet', 'error');
-            return;
-        }
-    } else {
-        title.textContent = 'Create New Character';
-        deleteBtn.style.display = 'none';
-        clearCharacterSheet();
-    }
-    
-    modal.style.display = 'block';
-    setTimeout(() => updateModifiers(), 100);
-}
-
-// Populate character sheet with data
-function populateCharacterSheet(character) {
-    // Basic info
-    document.getElementById('sheet-char-name').value = character.name || '';
-    document.getElementById('sheet-class').value = character.class || '';
-    document.getElementById('sheet-level').value = character.level || 1;
-    document.getElementById('sheet-race').value = character.race || '';
-    document.getElementById('sheet-background').value = character.background || '';
-    document.getElementById('sheet-alignment').value = character.alignment || '';
-    
-    // Ability scores
-    document.getElementById('sheet-strength').value = character.strength || 10;
-    document.getElementById('sheet-dexterity').value = character.dexterity || 10;
-    document.getElementById('sheet-constitution').value = character.constitution || 10;
-    document.getElementById('sheet-intelligence').value = character.intelligence || 10;
-    document.getElementById('sheet-wisdom').value = character.wisdom || 10;
-    document.getElementById('sheet-charisma').value = character.charisma || 10;
-    
-    // Combat stats
-    document.getElementById('sheet-ac').value = character.ac || 10;
-    document.getElementById('sheet-initiative').value = character.initiative || 0;
-    document.getElementById('sheet-speed').value = character.speed || 30;
-    
-    // Hit points
-    document.getElementById('sheet-hp-max').value = character.hp_max || 10;
-    document.getElementById('sheet-hp-current').value = character.hp_current || 10;
-    document.getElementById('sheet-hp-temp').value = 0;
-    
-    // Other stats
-    document.getElementById('sheet-inspiration').value = character.inspiration || 0;
-    document.getElementById('sheet-proficiency').value = character.proficiency_bonus || 2;
-    
-    // Text areas
-    document.getElementById('sheet-attacks').value = character.attacks_spells || '';
-    document.getElementById('sheet-equipment').value = character.equipment || '';
-    document.getElementById('sheet-languages').value = character.languages || '';
-    document.getElementById('sheet-features').value = character.features_traits || '';
-    document.getElementById('sheet-personality').value = character.personality_traits || '';
-    document.getElementById('sheet-ideals').value = character.ideals || '';
-    document.getElementById('sheet-bonds').value = character.bonds || '';
-    document.getElementById('sheet-flaws').value = character.flaws || '';
-    
-    // Skills and saves proficiencies
-    const skills = character.skills || {};
-    const saves = character.saving_throws || {};
-    
-    Object.keys(skillAbilityMap).forEach(skill => {
-        const checkbox = document.getElementById(`skill-${skill}`);
-        if (checkbox) {
-            checkbox.checked = skills[skill] || false;
-        }
-    });
-    
-    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(save => {
-        const checkbox = document.getElementById(`save-${save}-prof`);
-        if (checkbox) {
-            checkbox.checked = saves[save] || false;
+// Loa
