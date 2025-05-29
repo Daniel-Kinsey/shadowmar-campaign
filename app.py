@@ -501,137 +501,13 @@ def handle_dice_roll(data):
         'timestamp': datetime.now().isoformat()
     }, room='campaign')
 
-if __name__ == '__main__':
-    init_db()
-    # Use port from environment variable or default to 5000
-    port = int(os.environ.get('PORT', 5000))
-    
-    # Production-safe configuration
-    debug_mode = os.environ.get('FLASK_ENV') == 'development'
-    socketio.run(app, debug=debug_mode, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
-
-# DM Book API endpoints
-@app.route('/api/dm/book/<section>')
-def get_dm_book_section(section):
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    # Default content for each section
-    dm_book_content = {
-        'overview': {
-            'title': 'World Overview',
-            'content': '''<h3>🌊 Chronicles of Shadowmar</h3>
-            <p>A seafaring campaign set in the treacherous waters around the mysterious port city of Shadowmar...</p>
-            <div class="dm-secret-box">
-                <h4>🔒 DM Secret</h4>
-                <p>The true power behind Shadowmar is the ancient Kraken Lord sleeping beneath the harbor.</p>
-            </div>'''
-        },
-        'sessions': {
-            'title': 'Session Archive', 
-            'content': '''<h3>📜 Session Notes</h3>
-            <div class="progress-tracker">
-                <h4>Campaign Progress</h4>
-                <ul>
-                    <li>✅ Session 1: Arrival in Shadowmar</li>
-                    <li>🔄 Session 2: The Rusty Anchor Investigation</li>
-                    <li>⏳ Session 3: Journey to Skull Island</li>
-                </ul>
-            </div>'''
-        },
-        'xylos': {
-            'title': 'The Drowned City of Xylos',
-            'content': '''<h3>🏛️ The Drowned City</h3>
-            <div class="location-grid">
-                <div class="location-card">
-                    <h4>The Sunken Plaza</h4>
-                    <p>Once the heart of the great city, now home to merrow and sea devils.</p>
-                </div>
-                <div class="location-card">
-                    <h4>The Broken Spires</h4>
-                    <p>Twisted towers reaching toward the surface, filled with ancient magic.</p>
-                </div>
-            </div>'''
-        },
-        'npcs': {
-            'title': 'NPCs of Xylos',
-            'content': '''<h3>👥 Important Characters</h3>
-            <div class="npc-card friendly">
-                <h3>Captain Blackwater</h3>
-                <p><strong>Race:</strong> Human | <strong>Alignment:</strong> Chaotic Neutral</p>
-                <p>Grizzled sea captain with knowledge of the ancient ruins beneath Shadowmar.</p>
-            </div>
-            <div class="npc-card neutral">
-                <h3>Tavern Keeper Martha</h3>
-                <p><strong>Race:</strong> Halfling | <strong>Alignment:</strong> Lawful Good</p>
-                <p>Knows everyone's secrets but keeps them... for a price.</p>
-            </div>'''
-        },
-        'encounters': {
-            'title': 'Encounters & Combat',
-            'content': '''<h3>⚔️ Combat Encounters</h3>
-            <div class="encounter-box">
-                <h4>Harbor Ambush</h4>
-                <p><strong>Difficulty:</strong> Medium (CR 3-4)</p>
-                <div class="enemy-grid">
-                    <div class="enemy-card">
-                        <h4>Sahuagin Raiders (3)</h4>
-                        <p>HP: 22 | AC: 12 | Attacks: Spear +3 (1d6+1)</p>
-                    </div>
-                    <div class="enemy-card">
-                        <h4>Sahuagin Priestess (1)</h4>
-                        <p>HP: 33 | AC: 12 | Spells: Hold Person, Spiritual Weapon</p>
-                    </div>
-                </div>
-            </div>'''
-        },
-        'lore': {
-            'title': 'World Lore & Secrets',
-            'content': '''<h3>📚 Ancient Secrets</h3>
-            <div class="lore-section">
-                <h4>The Sundering of Xylos</h4>
-                <p>Three hundred years ago, the great city of Xylos defied the sea gods...</p>
-            </div>
-            <div class="oracle-box">
-                <h4>The Oracle's Prophecy</h4>
-                <p><em>"When the blood of kings mingles with the tide, the drowned shall rise and the deep shall divide."</em></p>
-            </div>'''
-        },
-        'tools': {
-            'title': 'DM Tools & Reference',
-            'content': '''<h3>🔧 Quick Reference</h3>
-            <div class="dc-table">
-                <h4>Difficulty Classes</h4>
-                <p>Easy: 10 | Medium: 15 | Hard: 20 | Very Hard: 25</p>
-            </div>
-            <div class="encounter-table">
-                <h4>Random Encounters (Roll d6)</h4>
-                <p>1-2: Merchant vessel<br>3-4: Pirate patrol<br>5: Sea monster<br>6: Mysterious fog</p>
-            </div>'''
-        }
-    }
-    
-    if section in dm_book_content:
-        return jsonify(dm_book_content[section])
-    else:
-        return jsonify({'error': 'Section not found'}), 404
-
-@app.route('/api/dm/book/<section>', methods=['PUT'])
-def update_dm_book_section(section):
-    if 'user_id' not in session or session['role'] != 'dm':
-        return jsonify({'error': 'Not authorized'}), 403
-    
-    data = request.get_json()
-    # For now, just return success (you can add database saving later)
-    return jsonify({'success': True})
-
 # Combat API endpoints
 @app.route('/api/combat/state')
 def get_combat_state():
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
-    # Return default combat state
+    # Return default combat state for now
     combat_state = {
         'active': False,
         'round': 1,
@@ -643,7 +519,7 @@ def get_combat_state():
 
 @app.route('/api/combat/start', methods=['POST'])
 def start_combat():
-    if 'user_id' not in session or session['role'] != 'dm':
+    if 'user_id' not in session or session.get('role') != 'dm':
         return jsonify({'error': 'Not authorized'}), 403
     
     data = request.get_json()
@@ -662,7 +538,7 @@ def start_combat():
 
 @app.route('/api/combat/end', methods=['POST'])
 def end_combat():
-    if 'user_id' not in session or session['role'] != 'dm':
+    if 'user_id' not in session or session.get('role') != 'dm':
         return jsonify({'error': 'Not authorized'}), 403
     
     socketio.emit('combat_ended', room='campaign')
@@ -670,10 +546,10 @@ def end_combat():
 
 @app.route('/api/combat/next-turn', methods=['POST'])
 def next_turn():
-    if 'user_id' not in session or session['role'] != 'dm':
+    if 'user_id' not in session or session.get('role') != 'dm':
         return jsonify({'error': 'Not authorized'}), 403
     
-    # Simplified next turn logic
+    # Basic next turn logic
     socketio.emit('combat_turn_changed', {'round': 1, 'current_turn': 0}, room='campaign')
     return jsonify({'success': True})
 
@@ -686,15 +562,253 @@ def update_combat_hp():
     char_id = data.get('character_id')
     new_hp = data.get('hp')
     
-    # Update character HP in database
-    conn = get_db_connection()
-    conn.execute('UPDATE characters SET hp_current = ? WHERE id = ?', (new_hp, char_id))
-    conn.commit()
-    conn.close()
+    try:
+        # Update character HP in database
+        conn = get_db_connection()
+        conn.execute('UPDATE characters SET hp_current = ? WHERE id = ?', (new_hp, char_id))
+        conn.commit()
+        conn.close()
+        
+        socketio.emit('hp_updated', {
+            'character_id': char_id,
+            'hp': new_hp,
+            'updated_by': session['username']
+        }, room='campaign')
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# DM Book API endpoints
+@app.route('/api/dm/book/<section>')
+def get_dm_book_section(section):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
     
-    socketio.emit('hp_updated', {
-        'character_id': char_id,
-        'hp': new_hp,
+    # Static content for each section
+    dm_book_content = {
+        'overview': {
+            'title': 'World Overview',
+            'content': '''<h3>🌊 Chronicles of Shadowmar</h3>
+            <p>A seafaring campaign set in the treacherous waters around the mysterious port city of Shadowmar. Here, pirates and adventurers gather to plan their next great voyage, while ancient secrets lurk beneath the waves.</p>
+            <div class="dm-secret-box">
+                <h4>🔒 DM Secret</h4>
+                <p>The true power behind Shadowmar is the ancient Kraken Lord Kythara, sleeping beneath the harbor. The city's prosperity comes from a pact made centuries ago.</p>
+            </div>
+            <div class="lore-section">
+                <h4>Campaign Themes</h4>
+                <p>This campaign focuses on maritime adventure, ancient mysteries, and the tension between civilization and the untamed sea.</p>
+            </div>'''
+        },
+        'sessions': {
+            'title': 'Session Archive',
+            'content': '''<h3>📜 Session Notes</h3>
+            <div class="progress-tracker">
+                <h4>Campaign Progress</h4>
+                <ul>
+                    <li>✅ Session 1: Arrival in Shadowmar - The party arrived at the bustling port and met their first contacts</li>
+                    <li>🔄 Session 2: The Rusty Anchor Investigation - Currently exploring the tavern's connection to smuggling</li>
+                    <li>⏳ Session 3: Journey to Skull Island - Planned expedition to recover the lost treasure</li>
+                    <li>⏳ Session 4: The Sunken Temple - Diving into the underwater ruins of Xylos</li>
+                </ul>
+            </div>
+            <div class="lore-section">
+                <h4>Key Story Beats</h4>
+                <p>The party is slowly uncovering the connection between the recent disappearances and the ancient curse of Xylos.</p>
+            </div>'''
+        },
+        'xylos': {
+            'title': 'The Drowned City of Xylos',
+            'content': '''<h3>🏛️ The Drowned City</h3>
+            <p>Three hundred years ago, the great city of Xylos defied the sea gods and was swallowed by the waves. Now its ruins rest beneath Shadowmar's harbor, filled with treasures and terrors.</p>
+            
+            <div class="location-grid">
+                <div class="location-card">
+                    <h4>The Sunken Plaza</h4>
+                    <p>Once the heart of the great city, now home to merrow tribes and sahuagin raiders. Ancient statues still stand guard over forgotten secrets.</p>
+                </div>
+                <div class="location-card">
+                    <h4>The Broken Spires</h4>
+                    <p>Twisted towers that reach toward the surface, their tops barely visible at low tide. Each contains powerful magical artifacts.</p>
+                </div>
+                <div class="location-card">
+                    <h4>The Throne of Tides</h4>
+                    <p>The sunken palace where King Nereon made his final stand. His crown still lies upon his skeletal remains.</p>
+                </div>
+            </div>
+            
+            <div class="dm-secret-box">
+                <h4>🔒 DM Secret</h4>
+                <p>The city can be raised from the depths by reuniting the three Crown Jewels of Xylos, but doing so would anger Kythara the Kraken Lord.</p>
+            </div>'''
+        },
+        'npcs': {
+            'title': 'NPCs of Xylos',
+            'content': '''<h3>👥 Important Characters</h3>
+            
+            <div class="npc-card friendly">
+                <h3>Captain "Blackwater" Morgan</h3>
+                <p><strong>Race:</strong> Human | <strong>Alignment:</strong> Chaotic Neutral</p>
+                <p><strong>Role:</strong> Retired pirate captain, now tavern owner</p>
+                <p>Grizzled sea captain with knowledge of the ancient ruins beneath Shadowmar. Lost his leg to a sahuagin attack while exploring Xylos. Knows the location of two Crown Jewels.</p>
+                <p><strong>Motivation:</strong> Wants revenge against the sea devils but fears awakening greater evils.</p>
+            </div>
+            
+            <div class="npc-card neutral">
+                <h3>Martha "The Lighthouse" Brightwater</h3>
+                <p><strong>Race:</strong> Halfling | <strong>Alignment:</strong> Lawful Good</p>
+                <p><strong>Role:</strong> Tavern keeper at The Rusty Anchor</p>
+                <p>Knows everyone's secrets but keeps them... for a price. Her tavern serves as neutral ground for all factions in Shadowmar.</p>
+                <p><strong>Motivation:</strong> Maintains the peace and profits from information brokering.</p>
+            </div>
+            
+            <div class="npc-card hostile">
+                <h3>High Priestess Thalassa</h3>
+                <p><strong>Race:</strong> Sahuagin | <strong>Alignment:</strong> Lawful Evil</p>
+                <p><strong>Role:</strong> Leader of the Sunken Plaza sahuagin tribe</p>
+                <p>Believes her people are the rightful inheritors of Xylos and seeks to prevent its resurrection. Commands powerful sea magic.</p>
+                <p><strong>Motivation:</strong> Protect sahuagin territory and ancient sahuagin artifacts in the ruins.</p>
+            </div>'''
+        },
+        'encounters': {
+            'title': 'Encounters & Combat',
+            'content': '''<h3>⚔️ Combat Encounters</h3>
+            
+            <div class="encounter-box">
+                <h4>Harbor Ambush (CR 4)</h4>
+                <p><strong>Difficulty:</strong> Medium encounter for 4 level-3 characters</p>
+                <p><strong>Location:</strong> Shadowmar Harbor docks at night</p>
+                <div class="enemy-grid">
+                    <div class="enemy-card">
+                        <h4>Sahuagin Raiders (3)</h4>
+                        <p><strong>HP:</strong> 22 each | <strong>AC:</strong> 12 | <strong>Speed:</strong> 30ft, Swim 40ft</p>
+                        <p><strong>Attacks:</strong> Spear +3 (1d6+1), Bite +3 (1d4+1)</p>
+                        <p><strong>Special:</strong> Blood Frenzy, Shark Telepathy</p>
+                    </div>
+                    <div class="enemy-card">
+                        <h4>Sahuagin Priestess (1)</h4>
+                        <p><strong>HP:</strong> 33 | <strong>AC:</strong> 12 | <strong>Speed:</strong> 30ft, Swim 40ft</p>
+                        <p><strong>Spells:</strong> Hold Person, Spiritual Weapon, Cure Wounds</p>
+                        <p><strong>Special:</strong> Shark Telepathy, Limited Spellcasting</p>
+                    </div>
+                </div>
+                <p><strong>Tactics:</strong> Priestess casts Hold Person on strongest fighter, raiders focus fire on spellcasters.</p>
+            </div>
+            
+            <div class="encounter-box">
+                <h4>Sunken Plaza Exploration (CR 5)</h4>
+                <p><strong>Difficulty:</strong> Hard encounter with environmental hazards</p>
+                <p><strong>Location:</strong> 60 feet underwater in Xylos ruins</p>
+                <div class="enemy-grid">
+                    <div class="enemy-card">
+                        <h4>Merrow (2)</h4>
+                        <p><strong>HP:</strong> 45 each | <strong>AC:</strong> 13</p>
+                        <p><strong>Attacks:</strong> Harpoon +6 (2d6+4), Bite +6 (1d8+4)</p>
+                    </div>
+                    <div class="enemy-card">
+                        <h4>Water Weird (1)</h4>
+                        <p><strong>HP:</strong> 58 | <strong>AC:</strong> 13</p>
+                        <p><strong>Special:</strong> Invisible in water, Constrict, Water Bond</p>
+                    </div>
+                </div>
+                <p><strong>Hazards:</strong> Drowning rules, underwater combat disadvantage, unstable debris</p>
+            </div>'''
+        },
+        'lore': {
+            'title': 'World Lore & Secrets',
+            'content': '''<h3>📚 Ancient Secrets & Hidden Knowledge</h3>
+            
+            <div class="lore-section">
+                <h4>The Sundering of Xylos</h4>
+                <p>Three hundred years ago, King Nereon of Xylos discovered a way to harness the power of the deep ocean currents. His hubris led him to challenge Kythara, the ancient Kraken Lord who ruled the deepest trenches.</p>
+                <p>The war lasted seven years. In the end, Kythara called upon the fury of the sea itself, drowning the entire city in a single night. The survivors founded Shadowmar on the cliffs above, swearing never to delve too deeply into the ocean's mysteries.</p>
+            </div>
+            
+            <div class="oracle-box">
+                <h4>The Oracle's Prophecy</h4>
+                <p><em>"When the blood of kings mingles with the tide, and three crowns unite beneath the waves, the drowned shall rise and the deep shall divide. But beware - he who wakes the sleeping god must pay the ancient price."</em></p>
+            </div>
+            
+            <div class="dm-secret-box">
+                <h4>🔒 The True History</h4>
+                <p>King Nereon didn't just challenge Kythara - he made a pact with the Kraken Lord. In exchange for power over the seas, he promised to sacrifice his daughter, Princess Nerida. When the time came, he couldn't fulfill his bargain. Kythara's revenge was swift and merciless.</p>
+                <p>Princess Nerida still lives, transformed into a sea hag by the curse. She dwells in the deepest part of the ruins, guarding her father's crown and waiting for someone brave enough to break the curse.</p>
+            </div>
+            
+            <div class="lore-section">
+                <h4>The Crown Jewels of Xylos</h4>
+                <ul>
+                    <li><strong>The Pearl of Depths:</strong> Hidden in the Sunken Plaza, grants water breathing</li>
+                    <li><strong>The Coral of Storms:</strong> Located in the Broken Spires, controls weather</li>
+                    <li><strong>The Crown of Tides:</strong> In the throne room, commands all sea creatures</li>
+                </ul>
+            </div>'''
+        },
+        'tools': {
+            'title': 'DM Tools & Reference',
+            'content': '''<h3>🔧 Quick Reference & Tools</h3>
+            
+            <div class="dc-table">
+                <h4>Difficulty Classes</h4>
+                <p><strong>Very Easy:</strong> 5 | <strong>Easy:</strong> 10 | <strong>Medium:</strong> 15 | <strong>Hard:</strong> 20 | <strong>Very Hard:</strong> 25 | <strong>Nearly Impossible:</strong> 30</p>
+            </div>
+            
+            <div class="encounter-table">
+                <h4>Random Encounters (Roll d8)</h4>
+                <p><strong>1-2:</strong> Merchant vessel flying Shadowmar colors<br>
+                <strong>3-4:</strong> Sahuagin patrol (2d4 raiders)<br>
+                <strong>5:</strong> Pod of dolphins (friendly, may warn of danger)<br>
+                <strong>6:</strong> Mysterious fog bank (visibility drops to 10 feet)<br>
+                <strong>7:</strong> Floating debris from Xylos (possible treasure)<br>
+                <strong>8:</strong> Sea hag's illusion (appears as distressed sailor)</p>
+            </div>
+            
+            <div class="dc-table">
+                <h4>Underwater Rules</h4>
+                <p><strong>Breath Holding:</strong> 1 + CON modifier minutes (minimum 30 seconds)<br>
+                <strong>Drowning:</strong> 1 round to drop to 0 HP, then death saves<br>
+                <strong>Combat:</strong> Disadvantage on attacks without swimming speed<br>
+                <strong>Vision:</strong> 60 feet normal, 120 feet in clear water</p>
+            </div>
+            
+            <div class="encounter-table">
+                <h4>Treasure Generator (Roll d6)</h4>
+                <p><strong>1:</strong> 2d6 × 10 gold pieces in a waterproof pouch<br>
+                <strong>2:</strong> Potion of Water Breathing<br>
+                <strong>3:</strong> Pearl worth 100gp + ancient Xylosian coin (50gp to collector)<br>
+                <strong>4:</strong> Coral sculpture (art object worth 150gp)<br>
+                <strong>5:</strong> Scroll of Control Water<br>
+                <strong>6:</strong> Fragment of Crown Jewel (plot item)</p>
+            </div>
+            
+            <div class="atmosphere-box">
+                <h4>Atmosphere & Descriptions</h4>
+                <p><strong>Shadowmar Harbor:</strong> "The salty air carries the sound of creaking ropes and distant sea shanties. Lanterns bob on the waves like fallen stars."</p>
+                <p><strong>Diving to Xylos:</strong> "As you descend, the water grows darker and colder. Ancient spires emerge from the gloom like the fingers of a drowned giant."</p>
+                <p><strong>Inside the Ruins:</strong> "Phosphorescent algae clings to the walls, casting an eerie blue-green glow. Schools of fish dart between crumbling columns."</p>
+            </div>'''
+        }
+    }
+    
+    if section in dm_book_content:
+        return jsonify(dm_book_content[section])
+    else:
+        return jsonify({'error': 'Section not found'}), 404
+
+@app.route('/api/dm/book/<section>', methods=['PUT'])
+def update_dm_book_section(section):
+    if 'user_id' not in session or session.get('role') != 'dm':
+        return jsonify({'error': 'Not authorized'}), 403
+    
+    data = request.get_json()
+    title = data.get('title')
+    content = data.get('content')
+    
+    # For now, just return success (you can add database saving later)
+    socketio.emit('dm_book_updated', {
+        'section': section,
+        'title': title,
+        'content': content,
         'updated_by': session['username']
     }, room='campaign')
     
@@ -721,7 +835,8 @@ def get_battlemap_state():
         'fog_of_war': {},
         'background_image': None,
         'walls': [],
-        'lighting': {}
+        'lighting': {},
+        'showGrid': True
     }
     return jsonify(battle_map_state)
 
@@ -735,22 +850,25 @@ def move_token():
     x = data.get('x')
     y = data.get('y')
     
-    # Update character position in database
-    conn = get_db_connection()
-    conn.execute('UPDATE characters SET token_x = ?, token_y = ? WHERE id = ?', (x, y, token_id))
-    conn.commit()
-    conn.close()
-    
-    socketio.emit('token_moved', {
-        'token_id': token_id,
-        'x': x,
-        'y': y,
-        'moved_by': session['username']
-    }, room='campaign')
-    
-    return jsonify({'success': True})
+    try:
+        # Update character position in database
+        conn = get_db_connection()
+        conn.execute('UPDATE characters SET token_x = ?, token_y = ? WHERE id = ?', (x, y, token_id))
+        conn.commit()
+        conn.close()
+        
+        socketio.emit('token_moved', {
+            'token_id': token_id,
+            'x': x,
+            'y': y,
+            'moved_by': session['username']
+        }, room='campaign')
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-# Secret Messages
+# Secret Messages API
 @app.route('/api/secret-message', methods=['POST'])
 def send_secret_message():
     if 'user_id' not in session:
@@ -771,3 +889,38 @@ def send_secret_message():
     }, room=f'user_{recipient}')
     
     return jsonify({'success': True})
+
+@app.route('/api/secret-messages')
+def get_secret_messages():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    # Return empty list for now (you can add database storage later)
+    return jsonify([])
+
+# Add these socket events to your existing socket handlers
+@socketio.on('join_battlemap')
+def on_join_battlemap():
+    if 'username' in session:
+        join_room('battlemap')
+        emit('battlemap_state', {
+            'width': 30,
+            'height': 20,
+            'grid_size': 50,
+            'tokens': {},
+            'showGrid': True
+        })
+
+@socketio.on('leave_battlemap')
+def on_leave_battlemap():
+    if 'username' in session:
+        leave_room('battlemap')
+
+if __name__ == '__main__':
+    init_db()
+    # Use port from environment variable or default to 5000
+    port = int(os.environ.get('PORT', 5000))
+    
+    # Production-safe configuration
+    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    socketio.run(app, debug=debug_mode, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
