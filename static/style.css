@@ -1554,3 +1554,623 @@ body {
         left: 1rem;
     }
 }
+
+/* Character Sheet Modal */
+.character-sheet-modal .modal-content {
+    max-width: 1200px;
+    width: 95vw;
+    max-height: 95vh;
+    background: #f8f5f0;
+    color: #2c1810;
+    border: 3px solid #8b4513;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(139, 69, 19, 0.1);
+}
+
+.character-sheet-content {
+    background: linear-gradient(45deg, #f8f5f0 0%, #f0ead6 50%, #f8f5f0 100%);
+    position: relative;
+}
+
+.character-sheet-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><defs><pattern id="parchment" patternUnits="userSpaceOnUse" width="100" height="100"><circle cx="50" cy="50" r="1" fill="%23d4af37" opacity="0.1"/><circle cx="25" cy="25" r="0.5" fill="%238b4513" opacity="0.1"/><circle cx="75" cy="75" r="0.5" fill="%238b4513" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23parchment)"/></svg>') repeat;
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+.character-sheet-body {
+    padding: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.character-sheet-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Sheet Header */
+.sheet-header {
+    border: 2px solid #8b4513;
+    background: rgba(139, 69, 19, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.character-banner {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.character-banner .form-group label {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #8b4513;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.large-text {
+    font-size: 1.5rem !important;
+    font-weight: bold;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid #8b4513 !important;
+    padding: 0.75rem !important;
+}
+
+.character-basics {
+    margin-top: 1rem;
+}
+
+/* Main Sheet Layout */
+.sheet-main {
+    display: grid;
+    grid-template-columns: 300px 1fr 300px;
+    gap: 2rem;
+    align-items: start;
+}
+
+/* Sheet Inputs */
+.sheet-input {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #8b4513;
+    color: #2c1810;
+    font-weight: 500;
+    border-radius: 4px;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.sheet-input:focus {
+    outline: none;
+    border-color: #d4af37;
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+    background: rgba(255, 255, 255, 1);
+}
+
+.sheet-textarea {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #8b4513;
+    color: #2c1810;
+    font-weight: 500;
+    border-radius: 4px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.sheet-textarea:focus {
+    outline: none;
+    border-color: #d4af37;
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+    background: rgba(255, 255, 255, 1);
+}
+
+/* Ability Scores */
+.ability-scores {
+    background: rgba(139, 69, 19, 0.1);
+    border: 2px solid #8b4513;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.ability-scores h4 {
+    text-align: center;
+    color: #8b4513;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.abilities-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.ability-score {
+    text-align: center;
+}
+
+.ability-score label {
+    display: block;
+    font-weight: bold;
+    color: #8b4513;
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+}
+
+.ability-box {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #8b4513;
+    border-radius: 8px;
+    padding: 0.5rem;
+    position: relative;
+}
+
+.ability-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2c1810;
+    margin-bottom: 0.25rem;
+}
+
+.ability-input:focus {
+    outline: none;
+}
+
+.ability-modifier {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #8b4513;
+    background: rgba(139, 69, 19, 0.1);
+    padding: 0.25rem;
+    border-radius: 4px;
+}
+
+/* Circle Inputs */
+.circle-input {
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 50% !important;
+    text-align: center !important;
+    font-size: 1.2rem !important;
+    font-weight: bold !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 3px solid #8b4513 !important;
+}
+
+/* Saving Throws */
+.saves-list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.save-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+}
+
+.save-checkbox,
+.skill-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #8b4513;
+}
+
+.save-modifier,
+.skill-modifier {
+    background: rgba(139, 69, 19, 0.1);
+    border: 1px solid #8b4513;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-weight: bold;
+    color: #8b4513;
+    min-width: 40px;
+    text-align: center;
+    font-size: 0.8rem;
+}
+
+/* Skills */
+.skills-list {
+    display: grid;
+    gap: 0.25rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.skill-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+/* Combat Stats */
+.combat-stats {
+    background: rgba(139, 69, 19, 0.1);
+    border: 2px solid #8b4513;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.combat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.combat-stat {
+    text-align: center;
+}
+
+.combat-stat label {
+    display: block;
+    font-weight: bold;
+    color: #8b4513;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.combat-value {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #8b4513;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.combat-input {
+    background: transparent;
+    border: none;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2c1810;
+    width: 100%;
+}
+
+.combat-input:focus {
+    outline: none;
+}
+
+/* Hit Points */
+.hit-points {
+    background: rgba(220, 20, 60, 0.1);
+    border: 2px solid #dc143c;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.hit-points h4 {
+    text-align: center;
+    color: #dc143c;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.hp-section {
+    display: grid;
+    gap: 1rem;
+}
+
+.hp-max,
+.hp-current,
+.hp-temp {
+    text-align: center;
+}
+
+.hp-max label,
+.hp-current label,
+.hp-temp label {
+    display: block;
+    font-weight: bold;
+    color: #dc143c;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.hp-input {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #dc143c;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #2c1810;
+    padding: 0.5rem;
+    width: 80px;
+}
+
+.hp-input.large {
+    width: 120px;
+    font-size: 1.5rem;
+    padding: 0.75rem;
+}
+
+.hp-input:focus {
+    outline: none;
+    border-color: #d4af37;
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+}
+
+/* Sheet Row */
+.sheet-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Hit Dice */
+.hit-dice {
+    background: rgba(139, 69, 19, 0.1);
+    border: 2px solid #8b4513;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.hit-dice h4 {
+    text-align: center;
+    color: #8b4513;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+}
+
+/* Death Saves */
+.death-saves {
+    background: rgba(0, 0, 0, 0.1);
+    border: 2px solid #2c1810;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.death-saves h4 {
+    text-align: center;
+    color: #2c1810;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+}
+
+.saves-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.saves-row label {
+    font-weight: bold;
+    color: #2c1810;
+    font-size: 0.8rem;
+}
+
+.death-checkboxes {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.death-checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: #dc143c;
+}
+
+/* Sections */
+.sheet-section {
+    background: rgba(139, 69, 19, 0.05);
+    border: 2px solid #8b4513;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.sheet-section h4 {
+    color: #8b4513;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+    border-bottom: 1px solid #8b4513;
+    padding-bottom: 0.5rem;
+}
+
+/* Attacks Section */
+.attacks-section {
+    background: rgba(139, 69, 19, 0.1);
+    border: 2px solid #8b4513;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.attacks-section h4 {
+    color: #8b4513;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+/* Equipment Section */
+.equipment-section {
+    background: rgba(139, 69, 19, 0.1);
+    border: 2px solid #8b4513;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.equipment-section h4 {
+    color: #8b4513;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+/* Character Traits */
+.character-traits {
+    display: grid;
+    gap: 1rem;
+}
+
+.trait-section {
+    background: rgba(212, 175, 55, 0.1);
+    border: 2px solid #d4af37;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.trait-section h4 {
+    color: #d4af37;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+/* Labels */
+.character-sheet label {
+    font-weight: bold;
+    color: #8b4513;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Modal Footer */
+.character-sheet-modal .modal-footer {
+    background: rgba(139, 69, 19, 0.1);
+    border-top: 2px solid #8b4513;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .sheet-main {
+        grid-template-columns: 280px 1fr 280px;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 1000px) {
+    .sheet-main {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .sheet-left,
+    .sheet-center,
+    .sheet-right {
+        max-width: none;
+    }
+    
+    .character-sheet-modal .modal-content {
+        width: 98vw;
+        max-height: 90vh;
+    }
+    
+    .abilities-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .combat-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .sheet-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .abilities-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .character-sheet-body {
+        padding: 1rem;
+    }
+}
+
+/* Scrollbar styling for sheet areas */
+.skills-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.skills-list::-webkit-scrollbar-track {
+    background: rgba(139, 69, 19, 0.1);
+    border-radius: 3px;
+}
+
+.skills-list::-webkit-scrollbar-thumb {
+    background: #8b4513;
+    border-radius: 3px;
+}
+
+.skills-list::-webkit-scrollbar-thumb:hover {
+    background: #654321;
+}
+
+/* Enhanced Character Card Styling */
+.character-card {
+    background: linear-gradient(135deg, #f8f5f0, #f0ead6);
+    border: 2px solid #8b4513;
+    color: #2c1810;
+}
+
+.character-card:hover {
+    box-shadow: 0 8px 16px rgba(139, 69, 19, 0.3);
+    transform: translateY(-3px);
+}
+
+.character-name {
+    color: #8b4513 !important;
+    font-weight: bold;
+}
+
+.character-controls .btn {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+}
