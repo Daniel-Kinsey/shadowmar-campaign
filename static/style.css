@@ -2155,3 +2155,235 @@ body {
         left: 1rem;
     }
 }
+
+/* Add these styles to your existing CSS for better DM book formatting */
+
+.progress-tracker {
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 4px solid #3b82f6;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.progress-tracker h4 {
+    color: #3b82f6;
+    margin-bottom: 0.5rem;
+}
+
+.progress-tracker ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.progress-tracker li {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.location-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.location-card {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.location-card:hover {
+    background: rgba(34, 197, 94, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.location-card h4 {
+    color: #22c55e;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.npc-card {
+    background: rgba(107, 114, 128, 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-left: 4px solid #6b7280;
+}
+
+.npc-card.friendly {
+    background: rgba(34, 197, 94, 0.1);
+    border-left-color: #22c55e;
+}
+
+.npc-card.hostile {
+    background: rgba(239, 68, 68, 0.1);
+    border-left-color: #ef4444;
+}
+
+.npc-card.neutral {
+    background: rgba(251, 191, 36, 0.1);
+    border-left-color: #fbbf24;
+}
+
+.npc-card h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.npc-card p {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.encounter-box {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.encounter-box h4 {
+    color: #ef4444;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.encounter-box h4::before {
+    content: "⚔️";
+    font-size: 1.2rem;
+}
+
+.enemy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.enemy-card {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.enemy-card h4 {
+    color: #fbbf24;
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+.lore-section {
+    background: rgba(168, 85, 247, 0.1);
+    border-left: 4px solid #a855f7;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.lore-section h4 {
+    color: #a855f7;
+    margin-bottom: 0.5rem;
+}
+
+.dm-secret-box {
+    background: rgba(239, 68, 68, 0.1);
+    border: 2px solid rgba(239, 68, 68, 0.3);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    position: relative;
+}
+
+.dm-secret-box::before {
+    content: "🔒 DM ONLY";
+    position: absolute;
+    top: -10px;
+    left: 1rem;
+    background: #ef4444;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.dm-secret-box h4 {
+    color: #ef4444;
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.oracle-box {
+    background: rgba(147, 51, 234, 0.1);
+    border: 2px solid rgba(147, 51, 234, 0.3);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    position: relative;
+}
+
+.oracle-box::before {
+    content: "🔮";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 1.5rem;
+}
+
+.oracle-box h4 {
+    color: #9333ea;
+    margin-bottom: 0.5rem;
+}
+
+.dc-table {
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-family: 'Courier New', monospace;
+}
+
+.dc-table h4 {
+    color: #3b82f6;
+    margin-bottom: 0.5rem;
+}
+
+.encounter-table {
+    background: rgba(34, 197, 94, 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.encounter-table h4 {
+    color: #22c55e;
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .location-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .enemy-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .npc-card, .encounter-box, .lore-section, .dm-secret-box {
+        margin: 0.5rem 0;
+        padding: 0.75rem;
+    }
+}
