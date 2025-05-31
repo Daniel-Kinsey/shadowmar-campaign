@@ -257,52 +257,50 @@
                 </div>
 
                 <!-- DM Book Tab -->
-                <div id="dm-book-tab" class="tab-content">
-                    <div class="tab-header">
-                        <h2>📖 Chronicles of Shadowmar: DM's Compendium</h2>
-                        <div class="dm-book-controls" id="dm-book-edit-controls" style="display: none;">
-                            <button id="edit-chapter-btn" class="btn btn-secondary">✏️ Edit Chapter</button>
-                            <button id="save-chapter-btn" class="btn btn-primary" style="display: none;">💾 Save Chapter</button>
-                            <button id="cancel-edit-btn" class="btn btn-secondary" style="display: none;">❌ Cancel</button>
-                        </div>
+<div id="dm-book-tab" class="tab-content">
+    <div class="tab-header">
+        <h2>📖 Chronicles of Shadowmar: DM's Compendium</h2>
+        <div class="dm-book-controls" id="dm-book-edit-controls" style="display: none;">
+            <button id="edit-chapter-btn" class="btn btn-secondary">✏️ Edit Chapter</button>
+            <button id="save-chapter-btn" class="btn btn-primary" style="display: none;">💾 Save Chapter</button>
+            <button id="cancel-edit-btn" class="btn btn-secondary" style="display: none;">❌ Cancel</button>
+        </div>
+    </div>
+    
+    <div class="dm-book-container">
+        <div class="book-navigation">
+            <h3>Table of Contents</h3>
+            <ul class="book-chapters">
+                <li><button class="chapter-btn active" data-section="overview">🌊 Campaign Overview</button></li>
+                <li><button class="chapter-btn" data-section="sessions">📜 Session Guide</button></li>
+                <li><button class="chapter-btn" data-section="xylos">🏛️ City of Xylos</button></li>
+                <li><button class="chapter-btn" data-section="npcs">👥 Major NPCs</button></li>
+                <li><button class="chapter-btn" data-section="encounters">⚔️ Encounters & Combat</button></li>
+                <li><button class="chapter-btn" data-section="weaver_tools">🔮 Weaver Tools</button></li>
+                <li><button class="chapter-btn" data-section="lore">📚 World Lore & Secrets</button></li>
+                <li><button class="chapter-btn" data-section="tools">🔧 DM Tools & Reference</button></li>
+            </ul>
+        </div>
+        
+        <div class="book-content">
+            <div class="book-page">
+                <div id="book-chapter-content">
+                    <div class="loading-book">Loading the ancient tome...</div>
+                </div>
+                <div id="book-chapter-editor" style="display: none;">
+                    <div class="form-group">
+                        <label for="chapter-title">Chapter Title</label>
+                        <input type="text" id="chapter-title" class="form-control">
                     </div>
-                    
-                    <div class="dm-book-container">
-                        <div class="book-navigation">
-                            <h3>Table of Contents</h3>
-                            <ul class="book-chapters">
-                                <li><button class="chapter-btn active" data-section="overview">🌊 World Overview</button></li>
-                                <li><button class="chapter-btn" data-section="sessions">📜 Session Archive</button></li>
-                                <li><button class="chapter-btn" data-section="xylos">🏛️ The Drowned City</button></li>
-                                <li><button class="chapter-btn" data-section="npcs">👥 NPCs of Xylos</button></li>
-                                <li><button class="chapter-btn" data-section="encounters">⚔️ Encounters & Combat</button></li>
-                                <li><button class="chapter-btn" data-section="lore">📚 World Lore & Secrets</button></li>
-                                <li><button class="chapter-btn" data-section="tools">🔧 DM Tools & Reference</button></li>
-                            </ul>
-                        </div>
-                        
-                        <div class="book-content">
-                            <div class="book-page">
-                                <div id="book-chapter-content">
-                                    <div class="loading-book">Loading the ancient tome...</div>
-                                </div>
-                                <div id="book-chapter-editor" style="display: none;">
-                                    <div class="form-group">
-                                        <label for="chapter-title">Chapter Title</label>
-                                        <input type="text" id="chapter-title" class="form-control">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="chapter-content">Chapter Content (HTML allowed)</label>
-                                        <textarea id="chapter-content" rows="20" class="form-control"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="form-group">
+                        <label for="chapter-content">Chapter Content (HTML allowed)</label>
+                        <textarea id="chapter-content" rows="20" class="form-control"></textarea>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
+</div>
 
     <!-- Character Sheet Modal -->
     <div id="character-sheet-modal" class="modal character-sheet-modal">
