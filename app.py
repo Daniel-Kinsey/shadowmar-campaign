@@ -1014,7 +1014,7 @@ def get_dm_book_section(section):
                 <strong>6:</strong> Fragment of Crown Jewel (plot item)</p>
             </div>
             
-            <div class="atmosphere-box">
+            <div class="lore-section">
                 <h4>Atmosphere & Descriptions</h4>
                 <p><strong>Shadowmar Harbor:</strong> "The salty air carries the sound of creaking ropes and distant sea shanties. Lanterns bob on the waves like fallen stars."</p>
                 <p><strong>Diving to Xylos:</strong> "As you descend, the water grows darker and colder. Ancient spires emerge from the gloom like the fingers of a drowned giant."</p>

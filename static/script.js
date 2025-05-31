@@ -297,11 +297,11 @@ function initializeEventListeners() {
     });
     
     const saveEditBtn = document.getElementById('save-edit');
-    const cancelEditBtn = document.getElementById('cancel-edit');
+    const cancelEditBtn2 = document.getElementById('cancel-edit');
     
     if (saveEditBtn) saveEditBtn.addEventListener('click', saveFieldEdit);
-    if (cancelEditBtn) {
-        cancelEditBtn.addEventListener('click', () => {
+    if (cancelEditBtn2) {
+        cancelEditBtn2.addEventListener('click', () => {
             const editModal = document.getElementById('edit-modal');
             if (editModal) editModal.style.display = 'none';
         });
@@ -1660,3 +1660,435 @@ function updateTokenList() {
         `;
         tokenList.appendChild(tokenItem);
     });
+}
+
+function openBattleMapWindow() {
+    window.open('/battlemap', '_blank', 'width=1200,height=800');
+}
+
+// Campaign data functions
+async function loadCampaignData() {
+    try {
+        const response = await fetch('/api/campaign');
+        const data = await response.json();
+        campaignData = data;
+        updateCampaignFields();
+    } catch (error) {
+        console.error('Error loading campaign data:', error);
+        showNotification('Failed to load campaign data', 'error');
+    }
+}
+
+function updateCampaignFields() {
+    Object.entries(campaignData).forEach(([key, value]) => {
+        updateCampaignField(key, value);
+    });
+}
+
+function updateCampaignField(key, value) {
+    const field = document.querySelector(`[data-field="${key}"] .field-content`);
+    if (field) {
+        field.textContent = value || 'No data available';
+    }
+}
+
+function openEditModal(field) {
+    const fieldKey = field.dataset.field;
+    const content = campaignData[fieldKey] || '';
+    
+    currentEditField = fieldKey;
+    
+    const modal = document.getElementById('edit-modal');
+    const textarea = document.getElementById('edit-textarea');
+    const title = document.getElementById('edit-modal-title');
+    
+    title.textContent = `Edit ${fieldKey.replace('_', ' ').toUpperCase()}`;
+    textarea.value = content;
+    modal.style.display = 'block';
+}
+
+async function saveFieldEdit() {
+    if (!currentEditField) return;
+    
+    const textarea = document.getElementById('edit-textarea');
+    const value = textarea.value;
+    
+    try {
+        const response = await fetch(`/api/campaign/${currentEditField}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ value })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('edit-modal').style.display = 'none';
+            showNotification('Field updated successfully', 'success');
+        } else {
+            showNotification('Failed to update field', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating field:', error);
+        showNotification('Failed to update field', 'error');
+    }
+}
+
+// Chat functions
+async function loadMessages() {
+    try {
+        const response = await fetch('/api/messages');
+        const messages = await response.json();
+        
+        const container = document.getElementById('chat-messages');
+        container.innerHTML = '';
+        
+        messages.forEach(message => {
+            addMessageToChat(message);
+        });
+        
+        // Scroll to bottom
+        container.scrollTop = container.scrollHeight;
+    } catch (error) {
+        console.error('Error loading messages:', error);
+        showNotification('Failed to load messages', 'error');
+    }
+}
+
+function addMessageToChat(message) {
+    const container = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${message.type || 'chat'}`;
+    
+    const timestamp = new Date(message.timestamp).toLocaleTimeString();
+    
+    messageDiv.innerHTML = `
+        <div class="message-header">
+            <span class="message-username">${message.username}</span>
+            <span class="message-timestamp">${timestamp}</span>
+        </div>
+        <div class="message-content">${message.message}</div>
+    `;
+    
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    
+    if (message) {
+        socket.emit('send_message', { message });
+        input.value = '';
+    }
+}
+
+// Secret message functions
+async function loadUsersList() {
+    // For now, we'll just populate with known users
+    const select = document.getElementById('secret-recipient');
+    if (select) {
+        select.innerHTML = '<option value="">Select recipient...</option>';
+        
+        // Add all users except current user
+        if (currentUser.role === 'dm') {
+            // DM can send to all players
+            const uniquePlayers = [...new Set(characters.map(c => c.username))];
+            uniquePlayers.forEach(username => {
+                if (username && username !== currentUser.username) {
+                    const option = document.createElement('option');
+                    option.value = username;
+                    option.textContent = username;
+                    select.appendChild(option);
+                }
+            });
+        } else {
+            // Players can send to DM
+            const option = document.createElement('option');
+            option.value = 'dm';
+            option.textContent = 'Dungeon Master';
+            select.appendChild(option);
+        }
+    }
+}
+
+function openSecretMessageModal() {
+    const modal = document.getElementById('secret-message-modal');
+    loadUsersList();
+    modal.style.display = 'block';
+}
+
+function closeSecretMessageModal() {
+    const modal = document.getElementById('secret-message-modal');
+    modal.style.display = 'none';
+    document.getElementById('secret-message-text').value = '';
+}
+
+async function sendSecretMessage() {
+    const recipient = document.getElementById('secret-recipient').value;
+    const message = document.getElementById('secret-message-text').value.trim();
+    
+    if (!recipient || !message) {
+        showNotification('Please select a recipient and enter a message', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/secret-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recipient, message })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            closeSecretMessageModal();
+            showNotification('Secret message sent!', 'success');
+        } else {
+            showNotification('Failed to send message', 'error');
+        }
+    } catch (error) {
+        console.error('Error sending secret message:', error);
+        showNotification('Failed to send message', 'error');
+    }
+}
+
+function showSecretMessage(data) {
+    const parchment = document.getElementById('secret-parchment');
+    const sender = document.getElementById('parchment-sender');
+    const message = document.getElementById('parchment-message');
+    
+    sender.textContent = data.sender;
+    message.textContent = data.message;
+    
+    parchment.style.display = 'block';
+    parchment.style.animation = 'parchmentSlideIn 0.5s ease-out';
+    
+    // Auto-hide after 10 seconds
+    setTimeout(() => {
+        parchment.style.animation = 'parchmentSlideOut 0.5s ease-out';
+        setTimeout(() => {
+            parchment.style.display = 'none';
+        }, 500);
+    }, 10000);
+}
+
+// Dice rolling functions
+function toggleDicePanel() {
+    const panel = document.getElementById('quick-dice-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function rollDice() {
+    const diceType = document.getElementById('dice-type').value;
+    const modifier = parseInt(document.getElementById('dice-modifier').value) || 0;
+    const reason = document.getElementById('dice-reason').value;
+    
+    socket.emit('dice_roll', {
+        dice: diceType,
+        modifier: modifier,
+        reason: reason
+    });
+}
+
+// File management functions
+async function loadFiles() {
+    try {
+        const response = await fetch('/api/files');
+        const files = await response.json();
+        
+        const container = document.getElementById('files-list');
+        container.innerHTML = '';
+        
+        files.forEach(file => {
+            const fileDiv = document.createElement('div');
+            fileDiv.className = 'file-item';
+            
+            const uploadDate = new Date(file.upload_date).toLocaleDateString();
+            
+            fileDiv.innerHTML = `
+                <div class="file-info">
+                    <h4>${file.original_name}</h4>
+                    <div class="file-meta">
+                        Uploaded by ${file.uploaded_by} on ${uploadDate}
+                    </div>
+                </div>
+                <div class="file-actions">
+                    <a href="/files/${file.filename}" target="_blank" class="btn btn-small btn-primary">View</a>
+                    <a href="/files/${file.filename}" download="${file.original_name}" class="btn btn-small btn-secondary">Download</a>
+                </div>
+            `;
+            
+            container.appendChild(fileDiv);
+        });
+    } catch (error) {
+        console.error('Error loading files:', error);
+        showNotification('Failed to load files', 'error');
+    }
+}
+
+async function uploadFile() {
+    const input = document.getElementById('file-input');
+    const file = input.files[0];
+    
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            input.value = '';
+            showNotification('File uploaded successfully', 'success');
+        } else {
+            showNotification('Failed to upload file', 'error');
+        }
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        showNotification('Failed to upload file', 'error');
+    }
+}
+
+// DM Book functions
+async function loadDMBookSection(section) {
+    currentSection = section;
+    
+    // Update active chapter button
+    document.querySelectorAll('.chapter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-section="${section}"]`).classList.add('active');
+    
+    try {
+        const response = await fetch(`/api/dm/book/${section}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('book-chapter-content').innerHTML = `
+                <h2>${data.title}</h2>
+                ${data.content}
+            `;
+        } else {
+            document.getElementById('book-chapter-content').innerHTML = `
+                <h2>Error</h2>
+                <p>Failed to load section: ${data.error}</p>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading DM book section:', error);
+        document.getElementById('book-chapter-content').innerHTML = `
+            <h2>Error</h2>
+            <p>Failed to load section. Please try again.</p>
+        `;
+    }
+}
+
+function startEditingChapter() {
+    if (currentUser.role !== 'dm') return;
+    
+    editingChapter = true;
+    
+    const content = document.getElementById('book-chapter-content');
+    const editor = document.getElementById('book-chapter-editor');
+    const editBtn = document.getElementById('edit-chapter-btn');
+    const saveBtn = document.getElementById('save-chapter-btn');
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+    
+    // Get current content
+    const titleElement = content.querySelector('h2');
+    const title = titleElement ? titleElement.textContent : '';
+    const contentHtml = content.innerHTML.replace(/<h2>.*?<\/h2>/, '').trim();
+    
+    document.getElementById('chapter-title').value = title;
+    document.getElementById('chapter-content').value = contentHtml;
+    
+    content.style.display = 'none';
+    editor.style.display = 'block';
+    editBtn.style.display = 'none';
+    saveBtn.style.display = 'inline-block';
+    cancelBtn.style.display = 'inline-block';
+}
+
+async function saveChapter() {
+    if (currentUser.role !== 'dm') return;
+    
+    const title = document.getElementById('chapter-title').value;
+    const content = document.getElementById('chapter-content').value;
+    
+    try {
+        const response = await fetch(`/api/dm/book/${currentSection}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, content })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            cancelEditingChapter();
+            loadDMBookSection(currentSection);
+            showNotification('Chapter saved successfully', 'success');
+        } else {
+            showNotification('Failed to save chapter', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving chapter:', error);
+        showNotification('Failed to save chapter', 'error');
+    }
+}
+
+function cancelEditingChapter() {
+    editingChapter = false;
+    
+    const content = document.getElementById('book-chapter-content');
+    const editor = document.getElementById('book-chapter-editor');
+    const editBtn = document.getElementById('edit-chapter-btn');
+    const saveBtn = document.getElementById('save-chapter-btn');
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+    
+    content.style.display = 'block';
+    editor.style.display = 'none';
+    editBtn.style.display = 'inline-block';
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+}
+
+// Utility functions
+function showNotification(message, type = 'info') {
+    const container = document.getElementById('notifications');
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    container.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            if (container.contains(notification)) {
+                container.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Initialize DM Book on load
+document.addEventListener('DOMContentLoaded', () => {
+    // Load default DM Book section after other initialization
+    setTimeout(() => {
+        loadDMBookSection('overview');
+    }, 500);
+});
