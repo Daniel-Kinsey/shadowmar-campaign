@@ -819,397 +819,209 @@ def get_dm_book_section(section):
         return jsonify({'error': 'Not authenticated'}), 401
     
     # Static content for each section
-   # Replace the dm_book_content dictionary in your get_dm_book_section function with this:
-
-dm_book_content = {
-    'overview': {
-        'title': 'Chronicles of Shadowmar - Campaign Overview',
-        'content': '''<h3>🌊 Chronicles of Shadowmar</h3>
-        <p><strong>Campaign Length:</strong> 20-24 sessions (approximately 6-8 months of weekly play)<br>
-        <strong>Starting Level:</strong> 5th level<br>
-        <strong>Ending Level:</strong> 15th level<br>
-        <strong>Themes:</strong> Cosmic responsibility, redemption, balance, maritime adventure<br>
-        <strong>Tone:</strong> Epic fantasy with cosmic horror elements and moral complexity</p>
-        
-        <div class="lore-section">
-            <h4>Core Concepts</h4>
-            <p><strong>The Twilight World:</strong> Shadowmar exists in perpetual twilight, neither fully day nor night. Bioluminescent life provides most illumination, creating a world of ethereal beauty and hidden dangers.</p>
-            <p><strong>Naval Focus:</strong> This campaign centers around maritime adventure. Players begin with their own ship, the Shadowchaser, and much of the action takes place on or near water.</p>
-            <p><strong>Cosmic Stakes:</strong> While beginning with local concerns, the campaign gradually reveals cosmic implications. Players discover they're part of an ancient conflict between forces of creation (the Weavers) and entropy (the Void).</p>
-        </div>
-        
-        <div class="dm-secret-box">
-            <h4>🔒 DM Secret - Campaign Structure</h4>
-            <p><strong>Act I: The Awakening Waters (Sessions 1-7, Levels 5-7)</strong> - Players establish themselves as heroes while uncovering the mystery of Xylos's decay.</p>
-            <p><strong>Act II: The Scattered Threads (Sessions 8-12, Levels 8-12)</strong> - The scope expands as players hunt for the remaining Weaver Tools while fighting an escalating war against the Shadow Court.</p>
-            <p><strong>Act III: The Final Weaving (Sessions 13-24, Levels 13-15)</strong> - Cosmic forces awaken, reality itself becomes malleable, and players must choose how to reshape existence.</p>
-        </div>'''
-    },
-    
-    'sessions': {
-        'title': 'Session Guide & Progress',
-        'content': '''<h3>📜 Session Archive & Planning</h3>
-        
-        <div class="progress-tracker">
-            <h4>Act I: The Awakening Waters (Levels 5-7)</h4>
-            <ul>
-                <li><strong>Sessions 1-2: Journey to Xylos</strong> - Introduction to the setting and travel to the underwater city</li>
-                <li><strong>Session 3: The Heart of Shadows</strong> - The Whispering Library dungeon and first seal</li>
-                <li><strong>Session 4: Songs in the Deep</strong> - Musical puzzles and the Resonating Cavern</li>
-                <li><strong>Session 5: The Forge of Hope</strong> - Social encounters in the Glimmering Slums</li>
-                <li><strong>Session 6: The Oracle's Truth</strong> - Revelation of cosmic stakes and greater mystery</li>
-                <li><strong>Session 7: The Queen's Gambit</strong> - Political climax and transition to greater conflicts</li>
-            </ul>
-        </div>
-        
-        <div class="progress-tracker">
-            <h4>Act II: The Scattered Threads (Levels 8-12)</h4>
-            <ul>
-                <li><strong>Session 8: Shadows on the Horizon</strong> - First major battle against Shadow Court</li>
-                <li><strong>Session 9: The Frozen Loom</strong> - Journey north to claim the Stellar Loom</li>
-                <li><strong>Session 10: Dreams and Nightmares</strong> - Psychological dungeon and Dream Anchor</li>
-                <li><strong>Session 11: The Living Forge</strong> - Journey to the Underforge and Life Forge</li>
-                <li><strong>Session 12: The Seeds of Worlds</strong> - Final tool and ultimate stakes revelation</li>
-            </ul>
-        </div>
-        
-        <div class="progress-tracker">
-            <h4>Act III: The Final Weaving (Levels 13-15)</h4>
-            <ul>
-                <li><strong>Sessions 13-15: The Shadow Court's Gambit</strong> - Three-front war and escalating cosmic stakes</li>
-                <li><strong>Sessions 16-18: The Weaver's Awakening</strong> - Cosmic entities enter the conflict</li>
-                <li><strong>Sessions 19-21: The Grand Confluence</strong> - Reality-shaping ritual and ultimate choice</li>
-                <li><strong>Sessions 22-24: New Beginnings</strong> - Aftermath and establishment of new reality</li>
-            </ul>
-        </div>
-        
-        <div class="dm-secret-box">
-            <h4>🔒 DM Notes</h4>
-            <p>Every major plot point can be influenced by player choices. The campaign features multiple possible endings based on the party's decisions, moral stance, and relationships with key NPCs.</p>
-        </div>'''
-    },
-    
-    'xylos': {
-        'title': 'The Underwater City of Xylos',
-        'content': '''<h3>🏛️ Queen Thalassa's Domain</h3>
-        <p>Xylos exists in perpetual twilight beneath the waves, its bioluminescent architecture pulsing with rhythmic light. The city serves as the players' first major hub and represents the themes of decay, hope, and renewal that run throughout the campaign.</p>
-        
-        <div class="location-grid">
-            <div class="location-card">
-                <h4>The Grand Palace</h4>
-                <p>Queen Thalassa's coral palace, where the campaign's political heart beats. Here players make their first important diplomatic choices and learn about the cosmic stakes.</p>
+    dm_book_content = {
+        'overview': {
+            'title': 'World Overview',
+            'content': '''<h3>🌊 Chronicles of Shadowmar</h3>
+            <p>A seafaring campaign set in the treacherous waters around the mysterious port city of Shadowmar. Here, pirates and adventurers gather to plan their next great voyage, while ancient secrets lurk beneath the waves.</p>
+            <div class="dm-secret-box">
+                <h4>🔒 DM Secret</h4>
+                <p>The true power behind Shadowmar is the ancient Kraken Lord Kythara, sleeping beneath the harbor. The city's prosperity comes from a pact made centuries ago.</p>
             </div>
-            <div class="location-card">
-                <h4>The Whispering Library</h4>
-                <p>A five-level dungeon representing different eras of Xylos's history. Contains the first seal and crucial Weaver lore. Knowledge literally fades from the books as corruption spreads.</p>
+            <div class="lore-section">
+                <h4>Campaign Themes</h4>
+                <p>This campaign focuses on maritime adventure, ancient mysteries, and the tension between civilization and the untamed sea.</p>
+            </div>'''
+        },
+        'sessions': {
+            'title': 'Session Archive',
+            'content': '''<h3>📜 Session Notes</h3>
+            <div class="progress-tracker">
+                <h4>Campaign Progress</h4>
+                <ul>
+                    <li>✅ Session 1: Arrival in Shadowmar - The party arrived at the bustling port and met their first contacts</li>
+                    <li>🔄 Session 2: The Rusty Anchor Investigation - Currently exploring the tavern's connection to smuggling</li>
+                    <li>⏳ Session 3: Journey to Skull Island - Planned expedition to recover the lost treasure</li>
+                    <li>⏳ Session 4: The Sunken Temple - Diving into the underwater ruins of Xylos</li>
+                </ul>
             </div>
-            <div class="location-card">
-                <h4>The Resonating Cavern</h4>
-                <p>Cathedral-sized cavern with floating crystals that once sang with cosmic harmony. Now fallen silent, it holds the second seal and tests the party's musical cooperation.</p>
+            <div class="lore-section">
+                <h4>Key Story Beats</h4>
+                <p>The party is slowly uncovering the connection between the recent disappearances and the ancient curse of Xylos.</p>
+            </div>'''
+        },
+        'xylos': {
+            'title': 'The Drowned City of Xylos',
+            'content': '''<h3>🏛️ The Drowned City</h3>
+            <p>Three hundred years ago, the great city of Xylos defied the sea gods and was swallowed by the waves. Now its ruins rest beneath Shadowmar's harbor, filled with treasures and terrors.</p>
+            
+            <div class="location-grid">
+                <div class="location-card">
+                    <h4>The Sunken Plaza</h4>
+                    <p>Once the heart of the great city, now home to merrow tribes and sahuagin raiders. Ancient statues still stand guard over forgotten secrets.</p>
+                </div>
+                <div class="location-card">
+                    <h4>The Broken Spires</h4>
+                    <p>Twisted towers that reach toward the surface, their tops barely visible at low tide. Each contains powerful magical artifacts.</p>
+                </div>
+                <div class="location-card">
+                    <h4>The Throne of Tides</h4>
+                    <p>The sunken palace where King Nereon made his final stand. His crown still lies upon his skeletal remains.</p>
+                </div>
             </div>
-            <div class="location-card">
-                <h4>The Glimmering Slums</h4>
-                <p>The city's underbelly where hope seems scarce but innovation thrives. Contains the Heart's Forge and represents the campaign's themes of community and renewal.</p>
+            
+            <div class="dm-secret-box">
+                <h4>🔒 DM Secret</h4>
+                <p>The city can be raised from the depths by reuniting the three Crown Jewels of Xylos, but doing so would anger Kythara the Kraken Lord.</p>
+            </div>'''
+        },
+        'npcs': {
+            'title': 'NPCs of Xylos',
+            'content': '''<h3>👥 Important Characters</h3>
+            
+            <div class="npc-card friendly">
+                <h3>Captain "Blackwater" Morgan</h3>
+                <p><strong>Race:</strong> Human | <strong>Alignment:</strong> Chaotic Neutral</p>
+                <p><strong>Role:</strong> Retired pirate captain, now tavern owner</p>
+                <p>Grizzled sea captain with knowledge of the ancient ruins beneath Shadowmar. Lost his leg to a sahuagin attack while exploring Xylos. Knows the location of two Crown Jewels.</p>
+                <p><strong>Motivation:</strong> Wants revenge against the sea devils but fears awakening greater evils.</p>
             </div>
-        </div>
-        
-        <div class="dm-secret-box">
-            <h4>🔒 The Three Seals</h4>
-            <p>Xylos is protected by three mystical seals that regulate the city's life force. Restoring all three is required to purify the first Weaver Tool and unlock Queen Thalassa's full power.</p>
-            <p><strong>First Seal:</strong> Whispering Library - requires personal truth from each player</p>
-            <p><strong>Second Seal:</strong> Resonating Cavern - requires musical harmony and cooperation</p>
-            <p><strong>Third Seal:</strong> Heart's Forge - requires community support and sacrifice</p>
-        </div>
-        
-        <div class="oracle-box">
-            <h4>Environmental Effects</h4>
-            <p><strong>Bioluminescent Lighting:</strong> Bright light in populated areas, dim in abandoned sections, darkness in corrupted zones</p>
-            <p><strong>Aquatic Environment:</strong> All areas are water-filled but magically breathable</p>
-            <p><strong>Decay Zones:</strong> Areas where corruption causes life drain and reality instability</p>
-        </div>'''
-    },
-    
-    'npcs': {
-        'title': 'Major NPCs',
-        'content': '''<h3>👥 Key Characters of the Campaign</h3>
-        
-        <div class="npc-card friendly">
-            <h3>Queen Thalassa of Xylos</h3>
-            <p><strong>Race:</strong> Triton | <strong>Alignment:</strong> Lawful Good | <strong>Role:</strong> Ruler and Key Ally</p>
-            <p>The wise and compassionate ruler of the underwater city. Her brother's corruption and the city's decay have tested her resolve, but she remains committed to finding solutions that benefit all of Shadowmar.</p>
-            <p><strong>Personality:</strong> Formal dignity with genuine warmth, always considers others before herself</p>
-            <p><strong>Arc:</strong> Grows from cautious leader to confident cosmic ally as Xylos is restored</p>
-        </div>
-        
-        <div class="npc-card friendly">
-            <h3>Elder Kaelen</h3>
-            <p><strong>Race:</strong> Triton | <strong>Alignment:</strong> Lawful Neutral | <strong>Role:</strong> Lore Keeper</p>
-            <p>The oldest member of Xylos's council who remembers fragments of the time before the Great Dimming. His knowledge of ancient lore makes him invaluable for understanding Weaver magic.</p>
-            <p><strong>Personality:</strong> Speaks in metaphors, patient but intolerant of willful ignorance</p>
-        </div>
-        
-        <div class="npc-card friendly">
-            <h3>Captain Blackwood</h3>
-            <p><strong>Race:</strong> Human | <strong>Alignment:</strong> Lawful Good | <strong>Role:</strong> Surface World Contact</p>
-            <p>A career naval officer representing the best of surface world leadership. Practical, honorable, and focused on protecting civilian vessels and maritime trade.</p>
-            <p><strong>Personality:</strong> Direct and practical, dry humor in crisis situations</p>
-        </div>
-        
-        <div class="npc-card hostile">
-            <h3>Archon Malachar (Queen's Brother)</h3>
-            <p><strong>Race:</strong> Triton | <strong>Alignment:</strong> Chaotic Evil | <strong>Role:</strong> Primary Antagonist</p>
-            <p>Once Queen Thalassa's beloved brother, corrupted by Void energy during an attempt to solve the city's decay. Becomes more powerful and less human as the campaign progresses.</p>
-            <p><strong>Corruption Arc:</strong> Starts recognizable, ends as barely triton. Redemption remains possible but increasingly difficult.</p>
-        </div>
-        
-        <div class="npc-card hostile">
-            <h3>Supreme Commander Vex'ahlia</h3>
-            <p><strong>Race:</strong> Human | <strong>Alignment:</strong> Chaotic Evil | <strong>Role:</strong> Ultimate Enemy</p>
-            <p>The Shadow Court's ultimate leader, once a brilliant mage who sought to transcend mortality. Complete corruption makes her a perfect conduit for the Unweaver's will.</p>
-            <p><strong>Philosophy:</strong> Views existence as a cosmic mistake that must be corrected</p>
-        </div>
-        
-        <div class="npc-card neutral">
-            <h3>The Oracle of the Deep</h3>
-            <p><strong>Race:</strong> Ancient Aboleth | <strong>Alignment:</strong> Lawful Neutral | <strong>Role:</strong> Information Source</p>
-            <p>An ancient being that transcended its species' evil through eons of contemplation. Provides cosmic knowledge through riddles and metaphors.</p>
-            <p><strong>Communication:</strong> Telepathic images, references multiple timelines, treats all mortals with distant benevolence</p>
-        </div>
-        
-        <div class="dm-secret-box">
-            <h4>🔒 The Four Weavers</h4>
-            <p><strong>Weaver of Stars:</strong> Cosmic order and celestial mechanics</p>
-            <p><strong>Weaver of Worlds:</strong> Physical matter and planetary systems</p>
-            <p><strong>Weaver of Life:</strong> Biological systems and spiritual growth</p>
-            <p><strong>Weaver of Dreams:</strong> Consciousness and possibility</p>
-            <p>These cosmic entities emerge in Act III to offer players the choice between ascension and remaining mortal guardians.</p>
-        </div>'''
-    },
-    
-    'encounters': {
-        'title': 'Key Encounters & Combat',
-        'content': '''<h3>⚔️ Major Combat Encounters</h3>
-        
-        <div class="encounter-box">
-            <h4>The Whispering Library (Session 3)</h4>
-            <p><strong>Challenge:</strong> Five-level dungeon with increasing difficulty</p>
-            <p><strong>Level 1:</strong> Book Wraiths (CR 2) - spirits of fading knowledge</p>
-            <p><strong>Level 3:</strong> Living Bookshelves (CR 3) - animated furniture protecting texts</p>
-            <p><strong>Level 4:</strong> Echo Scholars (CR 4) - obsessed with cataloging everything</p>
-            <p><strong>Boss:</strong> Keeper of Lost Words (CR 9) - massive creature guarding ancient secrets</p>
-            <p><strong>Special:</strong> Alternative resolution through communication and respect for knowledge</p>
-        </div>
-        
-        <div class="encounter-box">
-            <h4>The Discordant Maestro (Session 4)</h4>
-            <p><strong>Challenge:</strong> Musical encounter requiring cooperation over combat</p>
-            <p><strong>Boss:</strong> Corrupted Triton Maestro (CR 8) driven mad by maintaining city's harmony alone</p>
-            <p><strong>Environment:</strong> Floating crystals, perfect acoustics, sonic hazards</p>
-            <p><strong>Victory Condition:</strong> Restore sanity through collaborative musical performance</p>
-            <p><strong>Failure:</strong> Combat encounter but maestro can still be saved with healing magic</p>
-        </div>
-        
-        <div class="encounter-box">
-            <h4>Lady Morphia's Nightmare Realm (Session 10)</h4>
-            <p><strong>Challenge:</strong> Psychological dungeon with personalized horror chambers</p>
-            <p><strong>Mechanics:</strong> Each player faces chambers tailored to their character's fears</p>
-            <p><strong>Boss:</strong> Lady Morphia (CR 13) in reality-warping chamber</p>
-            <p><strong>Environment:</strong> Dream logic, shifting reality, emotional resonance effects</p>
-            <p><strong>Alternative:</strong> Reach her humanity through understanding her past</p>
-        </div>
-        
-        <div class="encounter-box">
-            <h4>The Void Titan (Session 13)</h4>
-            <p><strong>Challenge:</strong> Massive creature assault on Xylos</p>
-            <p><strong>Boss:</strong> Colossal Void Titan (CR 20) - reality-distorting aberration</p>
-            <p><strong>Phases:</strong> Fleet engagement → Harbor defense → Titan assault</p>
-            <p><strong>Victory Conditions:</strong> Multiple objectives including civilian protection</p>
-            <p><strong>Consequences:</strong> Success/failure affects available allies for endgame</p>
-        </div>
-        
-        <div class="encounter-box">
-            <h4>The Unweaver's Avatar (Session 18)</h4>
-            <p><strong>Challenge:</strong> Manifestation of pure entropy</p>
-            <p><strong>Boss:</strong> Unweaver's Avatar (CR 25+) - reality erasure abilities</p>
-            <p><strong>Combat:</strong> Takes place across multiple dimensions simultaneously</p>
-            <p><strong>Special:</strong> Can be redeemed by showing existence can improve</p>
-            <p><strong>Stakes:</strong> Failure means beginning of reality's collapse</p>
-        </div>
-        
-        <div class="dm-secret-box">
-            <h4>🔒 Combat Design Philosophy</h4>
-            <p>Most major encounters have non-violent solutions or redemption possibilities. Players should feel that violence is a choice, not the only option. Environmental storytelling and emotional stakes matter more than just defeating enemies.</p>
-        </div>'''
-    },
-    
-    'weaver_tools': {
-        'title': 'The Five Weaver Tools',
-        'content': '''<h3>🔮 Artifacts of Cosmic Power</h3>
-        
-        <div class="location-card">
-            <h4>The Essence of Gaia's Decay</h4>
-            <p><strong>Location:</strong> Xylos (Session 3)</p>
-            <p><strong>Corrupted State:</strong> Causes uncontrolled decay in 1-mile radius</p>
-            <p><strong>Purified Powers:</strong> Decomposition control, matter conversion, ecosystem restoration</p>
-            <p><strong>Purification:</strong> Restore all three seals, demonstrate understanding of creation/destruction balance</p>
-        </div>
-        
-        <div class="location-card">
-            <h4>The Stellar Loom</h4>
-            <p><strong>Location:</strong> Frozen Observatory, Kaldhaven Isle (Session 9)</p>
-            <p><strong>Corrupted State:</strong> Creates "star-shadows" blocking Weaver influence</p>
-            <p><strong>Purified Powers:</strong> Weather control, cosmic communication, stellar manipulation</p>
-            <p><strong>Guardian:</strong> Korvak the Star-Touched (corrupted frost giant shaman)</p>
-        </div>
-        
-        <div class="location-card">
-            <h4>The Dream Anchor</h4>
-            <p><strong>Location:</strong> Isle of Dreams (Session 10)</p>
-            <p><strong>Corrupted State:</strong> Traps people in false dreams, blurs reality</p>
-            <p><strong>Purified Powers:</strong> Dream walking, memory restoration, nightmare banishment</p>
-            <p><strong>Guardian:</strong> Lady Morphia and personalized nightmare chambers</p>
-        </div>
-        
-        <div class="location-card">
-            <h4>The Life Forge</h4>
-            <p><strong>Location:</strong> The Underforge (Session 11)</p>
-            <p><strong>Corrupted State:</strong> Spawns undead instead of life</p>
-            <p><strong>Purified Powers:</strong> True resurrection, evolution guidance, soul healing</p>
-            <p><strong>Access:</strong> Through Soulforge Gate beneath Volcanic Isle</p>
-        </div>
-        
-        <div class="location-card">
-            <h4>The World Seed</h4>
-            <p><strong>Location:</strong> Nexus of Creation beneath Scarred Mountains (Session 12)</p>
-            <p><strong>Corrupted State:</strong> Causes reality tears and dimensional instabilities</p>
-            <p><strong>Purified Powers:</strong> Reality shaping, dimensional anchoring, world creation</p>
-            <p><strong>Guardian:</strong> Supreme Commander Vex'ahlia and reality-warping chamber</p>
-        </div>
-        
-        <div class="dm-secret-box">
-            <h4>🔒 The True Nature</h4>
-            <p>Each tool is a fragment of a Weaver's consciousness and power. Using them changes the wielder over time, granting cosmic perspective but potentially losing humanity. The Shadow Court's corruption attempts were trying to claim power without understanding responsibility.</p>
-        </div>
-        
-        <div class="oracle-box">
-            <h4>The Grand Confluence</h4>
-            <p>The inevitable cosmic event where all five tools' power reaches its peak. Cannot be stopped, only directed. Players must choose what kind of reality they want to create: Perfected World, Balanced Reality, Evolutionary Reality, Multiple Realities, or return power to the Weavers.</p>
-        </div>'''
-    },
-    
-    'lore': {
-        'title': 'World Lore & Cosmic History',
-        'content': '''<h3>📚 The History of Reality</h3>
-        
-        <div class="lore-section">
-            <h4>The Age of Void (Prehistory)</h4>
-            <p>Before the Weavers, reality was formless chaos. The Void consumed everything, preventing stable existence from forming. Pure entropy without the structure needed for consciousness or meaning.</p>
-        </div>
-        
-        <div class="lore-section">
-            <h4>The First Weaving (Mythic Past)</h4>
-            <p>Four cosmic entities called Weavers emerged from pure possibility and began shaping reality. They created the first stable dimensions and populated them with life, establishing the fundamental forces that allow existence to persist.</p>
-        </div>
-        
-        <div class="lore-section">
-            <h4>The Age of Creation (Ancient History)</h4>
-            <p>The Weavers taught mortals to use tools of cosmic power, enabling rapid development of advanced civilizations across multiple worlds. This golden age saw incredible advancement but also growing hubris.</p>
-        </div>
-        
-        <div class="lore-section">
-            <h4>The Sundering (1,000 years ago)</h4>
-            <p>Mortals misused Weaver Tools, causing reality tears and dimensional collapses. The Weavers withdrew, hiding their tools and entering deep slumber to prevent further catastrophe.</p>
-        </div>
-        
-        <div class="lore-section">
-            <h4>The Shadow Wars (500 years ago)</h4>
-            <p>First attempts by void-touched entities to reclaim the hidden Weaver Tools. The wars ended in stalemate with most tools still lost, but established the Shadow Court as an ongoing threat.</p>
-        </div>
-        
-        <div class="lore-section">
-            <h4>The Great Dimming (47 years ago)</h4>
-            <p>Mysterious decline in magical energy across Shadowmar. Sea levels rose, some islands vanished, and many magical abilities weakened. This event marked the beginning of the current crisis.</p>
-        </div>
-        
-        <div class="dm-secret-box">
-            <h4>🔒 The Shadow Court's True Nature</h4>
-            <p><strong>The Unweaver:</strong> Primordial entity of pure entropy that existed before creation. Cannot act directly, must work through willing servants.</p>
-            <p><strong>The First Corrupted:</strong> Former mortals who sought Weaver Tools for personal gain, gradually losing humanity as they channel void energy.</p>
-            <p><strong>Philosophy:</strong> Genuinely believe they're saving existence from the "burden" of consciousness and suffering.</p>
-        </div>
-        
-        <div class="oracle-box">
-            <h4>The Oracle's Riddles</h4>
-            <p><em>"Three fragments you carry, but five were made. Two remain hidden where starlight has strayed..."</em></p>
-            <p><em>"The Essence drinks green but thirsts for blue. What feeds the deep when surface is through?"</em></p>
-            <p><em>"When Weavers wake, what price will you pay? Will you choose the night, or herald the day?"</em></p>
-        </div>'''
-    },
-    
-    'tools': {
-        'title': 'DM Tools & Quick Reference',
-        'content': '''<h3>🔧 Campaign Management Tools</h3>
-        
-        <div class="dc-table">
-            <h4>Corruption Resistance Saves</h4>
-            <p><strong>Casual Exposure:</strong> DC 12 (being near corrupted individuals)<br>
-            <strong>Direct Exposure:</strong> DC 15 (corrupted creature attacks)<br>
-            <strong>Intense Exposure:</strong> DC 18 (corruption plague epicenter)<br>
-            <strong>Overwhelming:</strong> DC 21 (saving someone already corrupted)</p>
-        </div>
-        
-        <div class="encounter-table">
-            <h4>Cosmic Perspective Effects</h4>
-            <p><strong>Constitution Save DC 18</strong> after experiencing cosmic awareness or gain exhaustion</p>
-            <p><strong>Success Grants:</strong> Cosmic Insight (advantage on Wisdom checks), Reality Sight (see through illusions), Temporal Awareness (advantage on initiative), Universal Empathy (communicate with any intelligent creature)</p>
-        </div>
-        
-        <div class="dc-table">
-            <h4>Weaver Tool Attunement</h4>
-            <p><strong>Requirements:</strong> Demonstrate understanding of cosmic responsibility<br>
-            <strong>Time:</strong> 1 hour of meditation with the tool<br>
-            <strong>Corruption Risk:</strong> Gradual alignment shift toward tool's nature<br>
-            <strong>Benefits:</strong> Access to tool's purified abilities</p>
-        </div>
-        
-        <div class="encounter-table">
-            <h4>Ship Combat Rules</h4>
-            <p><strong>Range Bands:</strong> Extreme (1000+ ft), Long (500-1000 ft), Medium (200-500 ft), Close (0-200 ft)<br>
-            <strong>Ramming:</strong> 6d10 damage, both ships take damage<br>
-            <strong>Crew Actions:</strong> Repair (2d6 HP), Navigate (advantage on next maneuver), Fire Weapons<br>
-            <strong>Critical Hits:</strong> Roll on ship damage table (sails, hull, crew, weapons)</p>
-        </div>
-        
-        <div class="dc-table">
-            <h4>Reality Stability Checks</h4>
-            <p><strong>Stable:</strong> No check needed<br>
-            <strong>Unstable:</strong> DC 15 Wisdom save or be confused for 1 round<br>
-            <strong>Chaotic:</strong> DC 18 Constitution save or take 2d6 psychic damage<br>
-            <strong>Collapsing:</strong> DC 20 Charisma save or be banished to Border Ethereal</p>
-        </div>
-        
-        <div class="lore-section">
-            <h4>Moral Choice Consequences</h4>
-            <p>Track player decisions throughout the campaign:</p>
-            <ul>
-                <li><strong>Redemption vs Punishment:</strong> How do they handle corrupted enemies?</li>
-                <li><strong>Power vs Responsibility:</strong> Do they use Weaver Tools wisely?</li>
-                <li><strong>Individual vs Collective:</strong> Do they prioritize personal goals or greater good?</li>
-                <li><strong>Order vs Chaos:</strong> Do they prefer structure or freedom?</li>
-            </ul>
-            <p>These choices determine available endings and cosmic transformation options.</p>
-        </div>
-        
-        <div class="oracle-box">
-            <h4>Campaign Ending Variants</h4>
-            <p><strong>Perfect World:</strong> Eliminate all suffering (removes growth and meaning)<br>
-            <strong>Balanced Reality:</strong> Improve current reality while preserving challenges<br>
-            <strong>Evolutionary Reality:</strong> Create self-improving cosmic mechanisms<br>
-            <strong>Multiple Realities:</strong> Separate realities for different preferences<br>
-            <strong>Mortal Choice:</strong> Return cosmic power, let mortals find their own way</p>
-        </div>'''
+            
+            <div class="npc-card neutral">
+                <h3>Martha "The Lighthouse" Brightwater</h3>
+                <p><strong>Race:</strong> Halfling | <strong>Alignment:</strong> Lawful Good</p>
+                <p><strong>Role:</strong> Tavern keeper at The Rusty Anchor</p>
+                <p>Knows everyone's secrets but keeps them... for a price. Her tavern serves as neutral ground for all factions in Shadowmar.</p>
+                <p><strong>Motivation:</strong> Maintains the peace and profits from information brokering.</p>
+            </div>
+            
+            <div class="npc-card hostile">
+                <h3>High Priestess Thalassa</h3>
+                <p><strong>Race:</strong> Sahuagin | <strong>Alignment:</strong> Lawful Evil</p>
+                <p><strong>Role:</strong> Leader of the Sunken Plaza sahuagin tribe</p>
+                <p>Believes her people are the rightful inheritors of Xylos and seeks to prevent its resurrection. Commands powerful sea magic.</p>
+                <p><strong>Motivation:</strong> Protect sahuagin territory and ancient sahuagin artifacts in the ruins.</p>
+            </div>'''
+        },
+        'encounters': {
+            'title': 'Encounters & Combat',
+            'content': '''<h3>⚔️ Combat Encounters</h3>
+            
+            <div class="encounter-box">
+                <h4>Harbor Ambush (CR 4)</h4>
+                <p><strong>Difficulty:</strong> Medium encounter for 4 level-3 characters</p>
+                <p><strong>Location:</strong> Shadowmar Harbor docks at night</p>
+                <div class="enemy-grid">
+                    <div class="enemy-card">
+                        <h4>Sahuagin Raiders (3)</h4>
+                        <p><strong>HP:</strong> 22 each | <strong>AC:</strong> 12 | <strong>Speed:</strong> 30ft, Swim 40ft</p>
+                        <p><strong>Attacks:</strong> Spear +3 (1d6+1), Bite +3 (1d4+1)</p>
+                        <p><strong>Special:</strong> Blood Frenzy, Shark Telepathy</p>
+                    </div>
+                    <div class="enemy-card">
+                        <h4>Sahuagin Priestess (1)</h4>
+                        <p><strong>HP:</strong> 33 | <strong>AC:</strong> 12 | <strong>Speed:</strong> 30ft, Swim 40ft</p>
+                        <p><strong>Spells:</strong> Hold Person, Spiritual Weapon, Cure Wounds</p>
+                        <p><strong>Special:</strong> Shark Telepathy, Limited Spellcasting</p>
+                    </div>
+                </div>
+                <p><strong>Tactics:</strong> Priestess casts Hold Person on strongest fighter, raiders focus fire on spellcasters.</p>
+            </div>
+            
+            <div class="encounter-box">
+                <h4>Sunken Plaza Exploration (CR 5)</h4>
+                <p><strong>Difficulty:</strong> Hard encounter with environmental hazards</p>
+                <p><strong>Location:</strong> 60 feet underwater in Xylos ruins</p>
+                <div class="enemy-grid">
+                    <div class="enemy-card">
+                        <h4>Merrow (2)</h4>
+                        <p><strong>HP:</strong> 45 each | <strong>AC:</strong> 13</p>
+                        <p><strong>Attacks:</strong> Harpoon +6 (2d6+4), Bite +6 (1d8+4)</p>
+                    </div>
+                    <div class="enemy-card">
+                        <h4>Water Weird (1)</h4>
+                        <p><strong>HP:</strong> 58 | <strong>AC:</strong> 13</p>
+                        <p><strong>Special:</strong> Invisible in water, Constrict, Water Bond</p>
+                    </div>
+                </div>
+                <p><strong>Hazards:</strong> Drowning rules, underwater combat disadvantage, unstable debris</p>
+            </div>'''
+        },
+        'lore': {
+            'title': 'World Lore & Secrets',
+            'content': '''<h3>📚 Ancient Secrets & Hidden Knowledge</h3>
+            
+            <div class="lore-section">
+                <h4>The Sundering of Xylos</h4>
+                <p>Three hundred years ago, King Nereon of Xylos discovered a way to harness the power of the deep ocean currents. His hubris led him to challenge Kythara, the ancient Kraken Lord who ruled the deepest trenches.</p>
+                <p>The war lasted seven years. In the end, Kythara called upon the fury of the sea itself, drowning the entire city in a single night. The survivors founded Shadowmar on the cliffs above, swearing never to delve too deeply into the ocean's mysteries.</p>
+            </div>
+            
+            <div class="oracle-box">
+                <h4>The Oracle's Prophecy</h4>
+                <p><em>"When the blood of kings mingles with the tide, and three crowns unite beneath the waves, the drowned shall rise and the deep shall divide. But beware - he who wakes the sleeping god must pay the ancient price."</em></p>
+            </div>
+            
+            <div class="dm-secret-box">
+                <h4>🔒 The True History</h4>
+                <p>King Nereon didn't just challenge Kythara - he made a pact with the Kraken Lord. In exchange for power over the seas, he promised to sacrifice his daughter, Princess Nerida. When the time came, he couldn't fulfill his bargain. Kythara's revenge was swift and merciless.</p>
+                <p>Princess Nerida still lives, transformed into a sea hag by the curse. She dwells in the deepest part of the ruins, guarding her father's crown and waiting for someone brave enough to break the curse.</p>
+            </div>
+            
+            <div class="lore-section">
+                <h4>The Crown Jewels of Xylos</h4>
+                <ul>
+                    <li><strong>The Pearl of Depths:</strong> Hidden in the Sunken Plaza, grants water breathing</li>
+                    <li><strong>The Coral of Storms:</strong> Located in the Broken Spires, controls weather</li>
+                    <li><strong>The Crown of Tides:</strong> In the throne room, commands all sea creatures</li>
+                </ul>
+            </div>'''
+        },
+        'tools': {
+            'title': 'DM Tools & Reference',
+            'content': '''<h3>🔧 Quick Reference & Tools</h3>
+            
+            <div class="dc-table">
+                <h4>Difficulty Classes</h4>
+                <p><strong>Very Easy:</strong> 5 | <strong>Easy:</strong> 10 | <strong>Medium:</strong> 15 | <strong>Hard:</strong> 20 | <strong>Very Hard:</strong> 25 | <strong>Nearly Impossible:</strong> 30</p>
+            </div>
+            
+            <div class="encounter-table">
+                <h4>Random Encounters (Roll d8)</h4>
+                <p><strong>1-2:</strong> Merchant vessel flying Shadowmar colors<br>
+                <strong>3-4:</strong> Sahuagin patrol (2d4 raiders)<br>
+                <strong>5:</strong> Pod of dolphins (friendly, may warn of danger)<br>
+                <strong>6:</strong> Mysterious fog bank (visibility drops to 10 feet)<br>
+                <strong>7:</strong> Floating debris from Xylos (possible treasure)<br>
+                <strong>8:</strong> Sea hag's illusion (appears as distressed sailor)</p>
+            </div>
+            
+            <div class="dc-table">
+                <h4>Underwater Rules</h4>
+                <p><strong>Breath Holding:</strong> 1 + CON modifier minutes (minimum 30 seconds)<br>
+                <strong>Drowning:</strong> 1 round to drop to 0 HP, then death saves<br>
+                <strong>Combat:</strong> Disadvantage on attacks without swimming speed<br>
+                <strong>Vision:</strong> 60 feet normal, 120 feet in clear water</p>
+            </div>
+            
+            <div class="encounter-table">
+                <h4>Treasure Generator (Roll d6)</h4>
+                <p><strong>1:</strong> 2d6 × 10 gold pieces in a waterproof pouch<br>
+                <strong>2:</strong> Potion of Water Breathing<br>
+                <strong>3:</strong> Pearl worth 100gp + ancient Xylosian coin (50gp to collector)<br>
+                <strong>4:</strong> Coral sculpture (art object worth 150gp)<br>
+                <strong>5:</strong> Scroll of Control Water<br>
+                <strong>6:</strong> Fragment of Crown Jewel (plot item)</p>
+            </div>
+            
+            <div class="lore-section">
+                <h4>Atmosphere & Descriptions</h4>
+                <p><strong>Shadowmar Harbor:</strong> "The salty air carries the sound of creaking ropes and distant sea shanties. Lanterns bob on the waves like fallen stars."</p>
+                <p><strong>Diving to Xylos:</strong> "As you descend, the water grows darker and colder. Ancient spires emerge from the gloom like the fingers of a drowned giant."</p>
+                <p><strong>Inside the Ruins:</strong> "Phosphorescent algae clings to the walls, casting an eerie blue-green glow. Schools of fish dart between crumbling columns."</p>
+            </div>'''
+        }
     }
-}
     
     if section in dm_book_content:
         return jsonify(dm_book_content[section])
