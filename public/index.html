@@ -1,0 +1,3123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronicles of Shadowmar - Campaign Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --deep-blue: #0f1419;
+            --ocean-blue: #1a2332;
+            --ship-brown: #8b4513;
+            --brass: #cd7f32;
+            --rope: #daa520;
+            --sea-foam: #2e8b57;
+            --pearl: #f8f8ff;
+            --danger: #dc143c;
+            --success: #228b22;
+            --warning: #ff8c00;
+            --info: #4682b4;
+        }
+
+        body {
+            font-family: 'Cinzel', serif;
+            background: linear-gradient(135deg, var(--deep-blue) 0%, var(--ocean-blue) 100%);
+            color: var(--pearl);
+            min-height: 100vh;
+            background-attachment: fixed;
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(46, 139, 87, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(205, 127, 50, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, var(--deep-blue) 0%, var(--ocean-blue) 100%);
+        }
+
+        .login-box {
+            background: rgba(26, 35, 50, 0.9);
+            padding: 3rem;
+            border-radius: 15px;
+            border: 2px solid var(--brass);
+            box-shadow: 0 0 30px rgba(205, 127, 50, 0.3);
+            text-align: center;
+            min-width: 400px;
+        }
+
+        .login-box h1 {
+            color: var(--brass);
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .login-box h2 {
+            color: var(--rope);
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            font-style: italic;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--pearl);
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--ship-brown);
+            border-radius: 8px;
+            background: rgba(15, 20, 25, 0.8);
+            color: var(--pearl);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--brass);
+            box-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, var(--ship-brown), var(--brass));
+            color: var(--pearl);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(205, 127, 50, 0.4);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+
+        .btn-danger { background: var(--danger); }
+        .btn-success { background: var(--success); }
+        .btn-warning { background: var(--warning); }
+        .btn-info { background: var(--info); }
+
+        /* Main Dashboard */
+        .dashboard {
+            display: none;
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            background: var(--ocean-blue);
+            border-bottom: 2px solid var(--brass);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .header h1 {
+            color: var(--brass);
+            font-size: 1.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .sidebar {
+            background: var(--ocean-blue);
+            border-right: 2px solid var(--brass);
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: block;
+            width: 100%;
+            background: transparent;
+            color: var(--pearl);
+            border: 1px solid var(--ship-brown);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--ship-brown);
+            border-color: var(--brass);
+            color: var(--brass);
+        }
+
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+            background: rgba(15, 20, 25, 0.5);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-card {
+            background: rgba(26, 35, 50, 0.9);
+            border: 2px solid var(--ship-brown);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .dashboard-card h3 {
+            color: var(--brass);
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--ship-brown);
+            padding-bottom: 0.5rem;
+        }
+
+        .player-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .player-card {
+            background: rgba(15, 20, 25, 0.7);
+            border: 1px solid var(--ship-brown);
+            border-radius: 8px;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .player-name {
+            color: var(--brass);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .player-role {
+            color: var(--rope);
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        .player-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat {
+            background: rgba(26, 35, 50, 0.8);
+            padding: 0.5rem;
+            border-radius: 4px;
+            text-align: center;
+            border: 1px solid var(--ship-brown);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .stat:hover {
+            border-color: var(--brass);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--pearl);
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: var(--brass);
+            font-size: 1.1rem;
+        }
+
+        .health-critical { color: var(--danger) !important; }
+        .health-warning { color: var(--warning) !important; }
+        .health-good { color: var(--success) !important; }
+
+        .quest-btn {
+            background: var(--sea-foam);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .battle-map-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 1rem 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .battle-map-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 20, 60, 0.4);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .quick-action {
+            background: var(--ship-brown);
+            color: var(--pearl);
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            font-family: inherit;
+        }
+
+        .quick-action:hover {
+            background: var(--brass);
+            transform: translateY(-2px);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--ocean-blue);
+            margin: 5% auto;
+            padding: 2rem;
+            border: 2px solid var(--brass);
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .modal-large {
+            width: 95%;
+            max-width: 1200px;
+            max-height: 90vh;
+        }
+
+        .close {
+            color: var(--brass);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: var(--rope);
+        }
+
+        .quest-item {
+            background: rgba(15, 20, 25, 0.7);
+            border: 1px solid var(--ship-brown);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .quest-title {
+            color: var(--brass);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .quest-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .quest-active { background: var(--success); color: white; }
+        .quest-completed { background: var(--brass); color: var(--deep-blue); }
+        .quest-failed { background: var(--danger); color: white; }
+        .quest-paused { background: var(--warning); color: var(--deep-blue); }
+
+        /* NPC Dialog System */
+        .npc-dialog {
+            background: rgba(15, 20, 25, 0.9);
+            border: 2px solid var(--brass);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .npc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--ship-brown);
+            padding-bottom: 0.5rem;
+        }
+
+        .npc-name {
+            color: var(--brass);
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .npc-location {
+            color: var(--rope);
+            font-style: italic;
+        }
+
+        .response-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .response-btn {
+            background: var(--ship-brown);
+            color: var(--pearl);
+            border: 1px solid var(--brass);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .response-btn:hover {
+            background: var(--brass);
+            color: var(--deep-blue);
+        }
+
+        .custom-response {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .custom-response input {
+            flex: 1;
+            background: rgba(26, 35, 50, 0.8);
+            border: 1px solid var(--ship-brown);
+            color: var(--pearl);
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        /* Battle Map */
+        .battle-map-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .battle-map {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(26, 35, 50, 0.9);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid var(--brass);
+            z-index: 100;
+        }
+
+        .token {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+            user-select: none;
+        }
+
+        .token-player { background: var(--success); }
+        .token-enemy { background: var(--danger); }
+        .token-npc { background: var(--info); }
+
+        .spell-template {
+            position: absolute;
+            border: 2px solid var(--warning);
+            background: rgba(255, 140, 0, 0.2);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .measurement-line {
+            position: absolute;
+            height: 2px;
+            background: var(--rope);
+            transform-origin: left center;
+            pointer-events: none;
+        }
+
+        /* Initiative Tracker */
+        .initiative-tracker {
+            background: rgba(26, 35, 50, 0.9);
+            border: 2px solid var(--brass);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .initiative-list {
+            list-style: none;
+        }
+
+        .initiative-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: rgba(15, 20, 25, 0.7);
+            border-radius: 6px;
+            border: 1px solid var(--ship-brown);
+        }
+
+        .initiative-item.current-turn {
+            border-color: var(--brass);
+            background: rgba(205, 127, 50, 0.2);
+        }
+
+        .turn-timer {
+            color: var(--warning);
+            font-weight: bold;
+        }
+
+        /* Sourcebook */
+        .sourcebook-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chapter-btn {
+            background: var(--ship-brown);
+            color: var(--pearl);
+            border: 1px solid var(--brass);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .chapter-btn.active {
+            background: var(--brass);
+            color: var(--deep-blue);
+        }
+
+        .sourcebook-content {
+            background: rgba(26, 35, 50, 0.9);
+            border: 2px solid var(--ship-brown);
+            border-radius: 10px;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .edit-mode {
+            border-color: var(--warning);
+        }
+
+        .edit-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* XP and Loot */
+        .xp-award {
+            background: rgba(26, 35, 50, 0.9);
+            border: 2px solid var(--brass);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .party-xp {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .xp-card {
+            background: rgba(15, 20, 25, 0.7);
+            border: 1px solid var(--ship-brown);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .level-up-notification {
+            background: var(--success);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            text-align: center;
+            margin-top: 0.5rem;
+            font-weight: bold;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px auto 1fr;
+            }
+            
+            .sidebar {
+                border-right: none;
+                border-bottom: 2px solid var(--brass);
+                padding: 1rem;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            
+            .nav-item {
+                display: inline-block;
+                margin-right: 8px;
+                margin-bottom: 0;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .login-box {
+                min-width: 300px;
+                margin: 1rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 2% auto;
+            }
+
+            .player-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .hidden { display: none !important; }
+
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(205, 127, 50, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(205, 127, 50, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(205, 127, 50, 0); }
+        }
+
+        /* Session Notes */
+        .session-notes {
+            background: rgba(26, 35, 50, 0.9);
+            border: 2px solid var(--ship-brown);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .note-entry {
+            background: rgba(15, 20, 25, 0.7);
+            border: 1px solid var(--ship-brown);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .note-timestamp {
+            color: var(--rope);
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Health Status Indicators */
+        .health-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(15, 20, 25, 0.8);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .health-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .health-excellent { background: var(--success); }
+        .health-good { background: #90EE90; }
+        .health-fair { background: var(--warning); }
+        .health-poor { background: #FF6347; }
+        .health-critical { background: var(--danger); }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <h1>Chronicles of Shadowmar</h1>
+            <h2>Campaign Management System</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn">Set Sail</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="dashboard">
+        <header class="header">
+            <h1>Chronicles of Shadowmar</h1>
+            <div class="user-info">
+                <span id="currentUser">Captain</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <nav class="sidebar">
+            <button class="nav-item active" onclick="showSection('dashboard')">
+                <i class="fas fa-anchor"></i> Dashboard
+            </button>
+            <button class="nav-item" onclick="showSection('players')">
+                <i class="fas fa-users"></i> Players
+            </button>
+            <button class="nav-item" onclick="showSection('sourcebook')">
+                <i class="fas fa-book"></i> Sourcebook
+            </button>
+            <button class="nav-item" onclick="showSection('npcs')">
+                <i class="fas fa-comments"></i> NPCs
+            </button>
+            <button class="nav-item" onclick="showSection('combat')">
+                <i class="fas fa-sword"></i> Combat
+            </button>
+            <button class="nav-item" onclick="showSection('quests')">
+                <i class="fas fa-scroll"></i> Quests
+            </button>
+            <button class="nav-item" onclick="showSection('loot')">
+                <i class="fas fa-coins"></i> Loot & XP
+            </button>
+            <button class="nav-item" onclick="showSection('notes')">
+                <i class="fas fa-sticky-note"></i> Session Notes
+            </button>
+            <button class="nav-item" onclick="showSection('settings')">
+                <i class="fas fa-cog"></i> Settings
+            </button>
+        </nav>
+
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="content-section">
+                <button class="battle-map-btn" onclick="openBattleMap()">
+                    <i class="fas fa-map"></i> Open Battle Map
+                </button>
+                
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3><i class="fas fa-anchor"></i> Current Party</h3>
+                        <div id="partyList" class="player-list">
+                            <!-- Party members will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3><i class="fas fa-comments"></i> Key NPCs</h3>
+                        <div id="keyNPCs">
+                            <!-- Important NPCs for current quest -->
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3><i class="fas fa-map-marker-alt"></i> Current Location</h3>
+                        <div id="currentLocation">
+                            <strong>Xylos - The Market Square</strong>
+                            <p>The party is exploring the ancient drowned city, standing before the King's statue in the main square.</p>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3><i class="fas fa-scroll"></i> Active Quests</h3>
+                        <div id="activeQuests">
+                            <!-- Current quests will be shown here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <button class="quick-action" onclick="rollInitiative()">
+                        <i class="fas fa-dice"></i> Roll Initiative
+                    </button>
+                    <button class="quick-action" onclick="awardXP()">
+                        <i class="fas fa-star"></i> Award XP
+                    </button>
+                    <button class="quick-action" onclick="addNPC()">
+                        <i class="fas fa-plus"></i> Add NPC
+                    </button>
+                    <button class="quick-action" onclick="updateLocation()">
+                        <i class="fas fa-map-marker-alt"></i> Update Location
+                    </button>
+                    <button class="quick-action" onclick="sessionNotes()">
+                        <i class="fas fa-sticky-note"></i> Session Notes
+                    </button>
+                    <button class="quick-action" onclick="randomEncounter()">
+                        <i class="fas fa-dice-d20"></i> Random Encounter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Players Section -->
+            <div id="playersSection" class="content-section hidden">
+                <h2><i class="fas fa-users"></i> Player Management</h2>
+                
+                <div class="dashboard-card">
+                    <h3>Party Overview</h3>
+                    <div id="detailedPlayerList">
+                        <!-- Detailed player management interface -->
+                    </div>
+                    <button class="btn" onclick="addPlayer()">
+                        <i class="fas fa-plus"></i> Add Player
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sourcebook Section -->
+            <div id="sourcebookSection" class="content-section hidden">
+                <h2><i class="fas fa-book"></i> Interactive Sourcebook</h2>
+                
+                <div class="sourcebook-nav" id="chapterNav">
+                    <!-- Chapter navigation will be generated -->
+                </div>
+
+                <div class="edit-controls">
+                    <button class="btn btn-warning" onclick="toggleEditMode()">
+                        <i class="fas fa-edit"></i> Edit Mode
+                    </button>
+                    <button class="btn btn-info" onclick="addContent()">
+                        <i class="fas fa-plus"></i> Add Content
+                    </button>
+                    <button class="btn btn-success" onclick="saveChanges()">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+
+                <div id="sourcebookContent" class="sourcebook-content">
+                    <!-- Sourcebook content will be loaded here -->
+                </div>
+            </div>
+
+            <!-- NPCs Section -->
+            <div id="npcsSection" class="content-section hidden">
+                <h2><i class="fas fa-comments"></i> NPC Management</h2>
+                
+                <div class="dashboard-card">
+                    <h3>NPC Database</h3>
+                    <div id="npcList">
+                        <!-- NPC list will be loaded here -->
+                    </div>
+                    <button class="btn" onclick="createNPC()">
+                        <i class="fas fa-plus"></i> Create NPC
+                    </button>
+                </div>
+            </div>
+
+            <!-- Combat Section -->
+            <div id="combatSection" class="content-section hidden">
+                <h2><i class="fas fa-sword"></i> Combat Management</h2>
+                
+                <div class="initiative-tracker">
+                    <h3><i class="fas fa-list-ol"></i> Initiative Order</h3>
+                    <div class="edit-controls">
+                        <button class="btn btn-success" onclick="startCombat()">Start Combat</button>
+                        <button class="btn btn-warning" onclick="nextTurn()">Next Turn</button>
+                        <button class="btn btn-danger" onclick="endCombat()">End Combat</button>
+                        <label>
+                            <input type="checkbox" id="turnTimerToggle"> Turn Timer (30s)
+                        </label>
+                    </div>
+                    <ul id="initiativeList" class="initiative-list">
+                        <!-- Initiative order will be shown here -->
+                    </ul>
+                    <div id="turnTimer" class="turn-timer hidden">Time Remaining: <span id="timeRemaining">30</span>s</div>
+                </div>
+            </div>
+
+            <!-- Quests Section -->
+            <div id="questsSection" class="content-section hidden">
+                <h2><i class="fas fa-scroll"></i> Quest Management</h2>
+                
+                <div class="dashboard-card">
+                    <h3>Quest Database</h3>
+                    <div id="questDatabase">
+                        <!-- All quests will be shown here -->
+                    </div>
+                    <button class="btn" onclick="createQuest()">
+                        <i class="fas fa-plus"></i> Create Quest
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loot & XP Section -->
+            <div id="lootSection" class="content-section hidden">
+                <h2><i class="fas fa-coins"></i> Loot & Experience Management</h2>
+                
+                <div class="xp-award">
+                    <h3><i class="fas fa-star"></i> Award Experience</h3>
+                    <div class="form-group">
+                        <label>XP Amount:</label>
+                        <input type="number" id="xpAmount" placeholder="Enter XP amount">
+                    </div>
+                    <div class="form-group">
+                        <label>Reason:</label>
+                        <input type="text" id="xpReason" placeholder="Quest completion, combat, roleplay, etc.">
+                    </div>
+                    <button class="btn btn-success" onclick="distributeXP()">
+                        <i class="fas fa-plus"></i> Award to Party
+                    </button>
+                </div>
+
+                <div class="party-xp" id="partyXP">
+                    <!-- Party XP status will be shown here -->
+                </div>
+
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-treasure-chest"></i> Treasure & Loot</h3>
+                    <div id="treasureLog">
+                        <!-- Treasure distribution log -->
+                    </div>
+                    <button class="btn" onclick="addTreasure()">
+                        <i class="fas fa-plus"></i> Add Treasure
+                    </button>
+                </div>
+            </div>
+
+            <!-- Session Notes Section -->
+            <div id="notesSection" class="content-section hidden">
+                <h2><i class="fas fa-sticky-note"></i> Session Notes</h2>
+                
+                <div class="session-notes">
+                    <h3>Current Session</h3>
+                    <div class="form-group">
+                        <textarea id="currentNotes" placeholder="Enter session notes..." rows="6"></textarea>
+                    </div>
+                    <button class="btn btn-success" onclick="saveSessionNote()">
+                        <i class="fas fa-save"></i> Save Note
+                    </button>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>Session History</h3>
+                    <div id="sessionHistory">
+                        <!-- Previous session notes -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settingsSection" class="content-section hidden">
+                <h2><i class="fas fa-cog"></i> Settings</h2>
+                
+                <div class="dashboard-card">
+                    <h3>User Management</h3>
+                    <div id="userManagement">
+                        <!-- User management interface -->
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>Campaign Settings</h3>
+                    <div class="form-group">
+                        <label>Campaign Name:</label>
+                        <input type="text" id="campaignName" value="Chronicles of Shadowmar">
+                    </div>
+                    <div class="form-group">
+                        <label>Current Session:</label>
+                        <input type="number" id="currentSession" value="3">
+                    </div>
+                    <button class="btn btn-success" onclick="saveCampaignSettings()">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Battle Map Modal -->
+    <div id="battleMapModal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close" onclick="closeModal('battleMapModal')">&times;</span>
+            <div class="battle-map-container">
+                <div class="map-controls">
+                    <h4>Battle Map Controls</h4>
+                    <button class="btn btn-small" onclick="addToken('player')">Add Player</button>
+                    <button class="btn btn-small" onclick="addToken('enemy')">Add Enemy</button>
+                    <button class="btn btn-small" onclick="addToken('npc')">Add NPC</button>
+                    <button class="btn btn-small" onclick="clearTokens()">Clear All</button>
+                    <button class="btn btn-small" onclick="toggleGrid()">Toggle Grid</button>
+                    <hr>
+                    <div>
+                        <label>Spell Template:</label>
+                        <select id="spellTemplate">
+                            <option value="">None</option>
+                            <option value="15">15ft Cone</option>
+                            <option value="20">20ft Radius</option>
+                            <option value="30">30ft Radius</option>
+                            <option value="60">60ft Radius</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Measurement Tool:</label>
+                        <button class="btn btn-small" onclick="toggleMeasurement()">Measure Distance</button>
+                    </div>
+                </div>
+                <div id="battleMap" class="battle-map">
+                    <!-- Battle map content -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Various Modals -->
+    <div id="questModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('questModal')">&times;</span>
+            <h2 id="questModalTitle">Player Quests</h2>
+            <div id="questModalContent">
+                <!-- Quest content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="npcModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('npcModal')">&times;</span>
+            <div id="npcModalContent">
+                <!-- NPC dialog content -->
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('editModal')">&times;</span>
+            <h2 id="editModalTitle">Edit Content</h2>
+            <div id="editModalContent">
+                <!-- Edit form content -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Database simulation - this would be replaced with actual backend API calls
+        let gameData = {
+            users: [
+                { id: 1, username: 'dm', password: 'shadowmar2024', role: 'admin' },
+                { id: 2, username: 'codm', password: 'stormchaser', role: 'dm' }
+            ],
+            players: [
+                {
+                    id: 1,
+                    name: 'Captain Blackwood',
+                    class: 'Ranger',
+                    level: 5,
+                    role: 'Navigator',
+                    hp: { current: 45, max: 45 },
+                    ac: 16,
+                    location: 'Xylos Market Square',
+                    statusEffects: [],
+                    spellSlots: { 
+                        level1: { current: 3, max: 4 }, 
+                        level2: { current: 2, max: 3 } 
+                    },
+                    experience: { current: 6500, total: 6500 },
+                    quests: [
+                        { id: 1, title: 'Explore Xylos Castle', status: 'active', description: 'Gain the Minister\'s trust to access the King\'s castle.', reward: 1000 },
+                        { id: 2, title: 'Research the Conflux', status: 'active', description: 'Learn about the ritual that sank Xylos.', reward: 750 }
+                    ]
+                },
+                {
+                    id: 2,
+                    name: 'First Mate Rodriguez',
+                    class: 'Fighter',
+                    level: 5,
+                    role: 'Master Gunner',
+                    hp: { current: 52, max: 58 },
+                    ac: 18,
+                    location: 'Xylos Market Square',
+                    statusEffects: ['Blessed'],
+                    spellSlots: { 
+                        level1: { current: 2, max: 2 } 
+                    },
+                    experience: { current: 6500, total: 6500 },
+                    quests: [
+                        { id: 1, title: 'Explore Xylos Castle', status: 'active', description: 'Gain the Minister\'s trust to access the King\'s castle.', reward: 1000 },
+                        { id: 3, title: 'Find Naval Weapons', status: 'active', description: 'Search for ship upgrades in Xylos.', reward: 500 }
+                    ]
+                },
+                {
+                    id: 3,
+                    name: 'Doctor Sarah Cross',
+                    class: 'Cleric',
+                    level: 4,
+                    role: 'Ship\'s Surgeon',
+                    hp: { current: 35, max: 38 },
+                    ac: 15,
+                    location: 'Xylos Market Square',
+                    statusEffects: [],
+                    spellSlots: { 
+                        level1: { current: 4, max: 4 }, 
+                        level2: { current: 3, max: 3 } 
+                    },
+                    experience: { current: 2700, total: 2700 },
+                    quests: [
+                        { id: 4, title: 'Study Xylos Healing Magic', status: 'active', description: 'Learn about the enhanced healing properties in Xylos.', reward: 600 }
+                    ]
+                }
+            ],
+            npcs: [
+                {
+                    id: 1,
+                    name: 'The Minister',
+                    location: 'Xylos Graveyard',
+                    role: 'Quest Giver',
+                    importance: 'high',
+                    personality: 'Solemn but helpful, speaks in riddles',
+                    responses: {
+                        greeting: [
+                            'The dead rest uneasily here, traveler.',
+                            'Another soul seeks answers in this drowned realm.',
+                            'Welcome to the eternal twilight of Xylos.'
+                        ],
+                        quest: [
+                            'Read the Chronicle, young one. Knowledge is the key to understanding.',
+                            'The King will not see you until you prove your worth.',
+                            'The truth of our fall lies in the Library of Whispers.'
+                        ],
+                        goodbye: [
+                            'May the Weavers guide your path.',
+                            'The truth lies buried deep, but not beyond reach.',
+                            'Return when you have learned what the dead already know.'
+                        ],
+                        help: [
+                            'Seek the Chronicle in the Library - it holds our history.',
+                            'The Church Specters are harmless, they only seek to serve.',
+                            'Beware the deeper waters - darker things dwell there.'
+                        ],
+                        custom: []
+                    }
+                },
+                {
+                    id: 2,
+                    name: 'Trenchkin Elder',
+                    location: 'Xylos Residential Strip',
+                    role: 'Information Source',
+                    importance: 'medium',
+                    personality: 'Cautious but helpful to those who prove trustworthy',
+                    responses: {
+                        greeting: [
+                            'Surface dwellers... you swim in dangerous waters.',
+                            'Few visitors come to our drowned home.',
+                            'You have the look of those who seek the deep treasures.'
+                        ],
+                        quest: [
+                            'The treasure you seek is not what you expect.',
+                            'Many have come seeking gold, but found only sorrow.',
+                            'Help our people, and we may help you in return.'
+                        ],
+                        goodbye: [
+                            'Be careful in the deeper districts.',
+                            'The currents here can pull you down forever.',
+                            'May you find what you truly need, not what you want.'
+                        ],
+                        help: [
+                            'The Echoes remember everything - speak to them carefully.',
+                            'Fresh fruit grows in the gardens, take what you need.',
+                            'The King\'s statue... sometimes its light changes meaning.'
+                        ],
+                        custom: []
+                    }
+                }
+            ],
+            combat: {
+                active: false,
+                initiative: [],
+                currentTurn: 0,
+                round: 1,
+                turnTimer: 30
+            },
+            battleMap: {
+                tokens: [],
+                gridSize: 40,
+                showGrid: true
+            },
+            sourcebook: {
+                chapters: [
+                    {
+                        id: 1,
+                        title: 'World Overview',
+                        content: 'The Genesis of Shadowmar...',
+                        sections: ['Genesis of Twilight', 'Realms Beyond the Veil', 'The Face of Shadowmar', 'Peoples & Places']
+                    },
+                    {
+                        id: 2,
+                        title: 'Character Creation',
+                        content: 'Pirate roles and character creation guidelines...',
+                        sections: ['Pirate Roles', 'Backgrounds', 'Equipment']
+                    }
+                ]
+            },
+            sessionNotes: [
+                {
+                    id: 1,
+                    timestamp: new Date('2024-01-15T19:30:00'),
+                    content: 'Session 1: The Storm\'s Fury - Party defeated The Tempestuous and saved Ironwood Isle. Gained significant renown and rewards.',
+                    session: 1
+                },
+                {
+                    id: 2,
+                    timestamp: new Date('2024-01-22T19:30:00'),
+                    content: 'Session 2: The Sunken Path - Party solved the constellation puzzle and entered Xylos. Encountered Cave Fisher at the gate.',
+                    session: 2
+                }
+            ],
+            treasure: [
+                {
+                    id: 1,
+                    name: '5,000 Gold Pieces',
+                    session: 1,
+                    distributed: true,
+                    description: 'Reward for saving Ironwood Isle'
+                },
+                {
+                    id: 2,
+                    name: 'Xylos Treasure Map',
+                    session: 1,
+                    distributed: true,
+                    description: 'Map leading to the drowned city'
+                }
+            ],
+            currentLocation: 'Xylos - Market Square',
+            currentSession: 3,
+            campaignName: 'Chronicles of Shadowmar'
+        };
+
+        let currentUser = null;
+        let editMode = false;
+        let battleMapMode = false;
+        let measuringMode = false;
+        let measureStart = null;
+
+        // Level progression table
+        const experienceThresholds = [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            // Set up event listeners
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Load any saved data from localStorage if available
+            loadSavedData();
+        }
+
+        function loadSavedData() {
+            try {
+                const saved = localStorage.getItem('shadowmarCampaign');
+                if (saved) {
+                    const savedData = JSON.parse(saved);
+                    gameData = { ...gameData, ...savedData };
+                }
+            } catch (error) {
+                console.log('No saved data found or error loading data');
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('shadowmarCampaign', JSON.stringify(gameData));
+            } catch (error) {
+                console.error('Error saving data:', error);
+            }
+        }
+
+        // Authentication
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const user = gameData.users.find(u => u.username === username && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                document.getElementById('currentUser').textContent = user.username;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'grid';
+                loadDashboard();
+            } else {
+                alert('Invalid credentials! Try: dm/shadowmar2024');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('loginForm').reset();
+        }
+
+        // Navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section and mark nav item as active
+            document.getElementById(sectionName + 'Section').classList.remove('hidden');
+            event.target.classList.add('active');
+            
+            // Load section-specific content
+            loadSectionContent(sectionName);
+        }
+
+        function loadSectionContent(sectionName) {
+            switch(sectionName) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'players':
+                    loadPlayersSection();
+                    break;
+                case 'sourcebook':
+                    loadSourcebook();
+                    break;
+                case 'npcs':
+                    loadNPCSection();
+                    break;
+                case 'combat':
+                    loadCombatSection();
+                    break;
+                case 'quests':
+                    loadQuestsSection();
+                    break;
+                case 'loot':
+                    loadLootSection();
+                    break;
+                case 'notes':
+                    loadNotesSection();
+                    break;
+                case 'settings':
+                    loadSettingsSection();
+                    break;
+            }
+        }
+
+        // Dashboard Functions
+        function loadDashboard() {
+            loadPartyList();
+            loadKeyNPCs();
+            loadActiveQuests();
+            loadCurrentLocation();
+        }
+
+        function loadPartyList() {
+            const partyList = document.getElementById('partyList');
+            partyList.innerHTML = '';
+            
+            gameData.players.forEach(player => {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card fade-in';
+                
+                const healthPercent = (player.hp.current / player.hp.max) * 100;
+                const healthClass = getHealthClass(healthPercent);
+                const healthBarClass = getHealthBarClass(healthPercent);
+                
+                const statusEffectsHTML = player.statusEffects.length > 0 
+                    ? `<div style="color: var(--rope); font-size: 0.8rem; margin-top: 0.5rem;">Effects: ${player.statusEffects.join(', ')}</div>`
+                    : '';
+
+                const spellSlotsHTML = Object.keys(player.spellSlots).map(level => {
+                    const slots = player.spellSlots[level];
+                    return `<div class="stat" onclick="editSpellSlot(${player.id}, '${level}')">
+                        <div class="stat-label">${level.replace('level', 'L')}</div>
+                        <div class="stat-value">${slots.current}/${slots.max}</div>
+                    </div>`;
+                }).join('');
+                
+                playerCard.innerHTML = `
+                    <div class="player-header">
+                        <div>
+                            <div class="player-name">${player.name}</div>
+                            <div class="player-role">${player.role} • Level ${player.level} ${player.class}</div>
+                        </div>
+                    </div>
+                    <div class="player-stats">
+                        <div class="stat" onclick="editHP(${player.id})">
+                            <div class="stat-label">HP</div>
+                            <div class="stat-value ${healthClass}">${player.hp.current}/${player.hp.max}</div>
+                            <div class="health-bar">
+                                <div class="health-fill ${healthBarClass}" style="width: ${healthPercent}%"></div>
+                            </div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">AC</div>
+                            <div class="stat-value">${player.ac}</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Location</div>
+                            <div class="stat-value" style="font-size: 0.7rem;">${player.location}</div>
+                        </div>
+                        ${spellSlotsHTML}
+                    </div>
+                    ${statusEffectsHTML}
+                    <div style="margin-top: 0.5rem;">
+                        <button class="quest-btn" onclick="showPlayerQuests(${player.id})">
+                            <i class="fas fa-scroll"></i> Quests
+                        </button>
+                        <button class="quest-btn" onclick="editPlayer(${player.id})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </div>
+                `;
+                
+                partyList.appendChild(playerCard);
+            });
+        }
+
+        function getHealthClass(percent) {
+            if (percent <= 25) return 'health-critical';
+            if (percent <= 50) return 'health-warning';
+            return 'health-good';
+        }
+
+        function getHealthBarClass(percent) {
+            if (percent <= 25) return 'health-critical';
+            if (percent <= 40) return 'health-poor';
+            if (percent <= 60) return 'health-fair';
+            if (percent <= 80) return 'health-good';
+            return 'health-excellent';
+        }
+
+        function loadKeyNPCs() {
+            const keyNPCs = document.getElementById('keyNPCs');
+            const importantNPCs = gameData.npcs.filter(npc => npc.importance === 'high');
+            
+            keyNPCs.innerHTML = importantNPCs.map(npc => `
+                <div class="quest-item">
+                    <div class="quest-title">
+                        <i class="fas fa-user"></i> ${npc.name}
+                    </div>
+                    <div style="color: var(--pearl); font-size: 0.9rem;">
+                        <i class="fas fa-map-marker-alt"></i> ${npc.location}
+                    </div>
+                    <div style="color: var(--rope); font-size: 0.8rem; font-style: italic; margin-top: 0.3rem;">
+                        ${npc.personality}
+                    </div>
+                    <button class="quest-btn" onclick="openNPCDialog(${npc.id})">
+                        <i class="fas fa-comments"></i> Talk
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function loadActiveQuests() {
+            const activeQuests = document.getElementById('activeQuests');
+            const allQuests = gameData.players.flatMap(p => p.quests).filter(q => q.status === 'active');
+            const uniqueQuests = allQuests.filter((quest, index, self) => 
+                index === self.findIndex(q => q.id === quest.id)
+            );
+            
+            activeQuests.innerHTML = uniqueQuests.map(quest => `
+                <div class="quest-item">
+                    <div class="quest-title">
+                        <i class="fas fa-scroll"></i> ${quest.title}
+                    </div>
+                    <span class="quest-status quest-${quest.status}">${quest.status.toUpperCase()}</span>
+                    ${quest.reward ? `<div style="color: var(--brass); font-size: 0.8rem; margin-top: 0.3rem;">Reward: ${quest.reward} XP</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function loadCurrentLocation() {
+            const currentLocation = document.getElementById('currentLocation');
+            currentLocation.innerHTML = `
+                <strong><i class="fas fa-map-marker-alt"></i> ${gameData.currentLocation}</strong>
+                <p>Session ${gameData.currentSession} - The party continues their exploration of the mysterious drowned city.</p>
+                <button class="quest-btn" onclick="updateLocation()">
+                    <i class="fas fa-edit"></i> Update Location
+                </button>
+            `;
+        }
+
+        // Player Management Functions
+        function loadPlayersSection() {
+            const detailedPlayerList = document.getElementById('detailedPlayerList');
+            detailedPlayerList.innerHTML = gameData.players.map(player => {
+                const nextLevel = player.level + 1;
+                const currentXP = player.experience.current;
+                const nextLevelXP = experienceThresholds[nextLevel] || 'Max Level';
+                const xpProgress = nextLevelXP !== 'Max Level' ? 
+                    `${currentXP}/${nextLevelXP} (${nextLevelXP - currentXP} needed)` : 
+                    `${currentXP} XP (Max Level)`;
+
+                return `
+                    <div class="player-card">
+                        <div class="player-header">
+                            <div>
+                                <div class="player-name">${player.name}</div>
+                                <div class="player-role">Level ${player.level} ${player.class} • ${player.role}</div>
+                            </div>
+                            <button class="btn btn-small btn-warning" onclick="editPlayer(${player.id})">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </div>
+                        <div class="player-stats">
+                            <div class="stat">
+                                <div class="stat-label">Health</div>
+                                <div class="stat-value">${player.hp.current}/${player.hp.max}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">AC</div>
+                                <div class="stat-value">${player.ac}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Experience</div>
+                                <div class="stat-value" style="font-size: 0.8rem;">${xpProgress}</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <strong>Active Quests:</strong> ${player.quests.filter(q => q.status === 'active').length}
+                        </div>
+                        <div style="margin-top: 0.5rem;">
+                            <strong>Status Effects:</strong> ${player.statusEffects.length > 0 ? player.statusEffects.join(', ') : 'None'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // NPC Management Functions
+        function loadNPCSection() {
+            const npcList = document.getElementById('npcList');
+            npcList.innerHTML = gameData.npcs.map(npc => `
+                <div class="npc-dialog">
+                    <div class="npc-header">
+                        <div>
+                            <div class="npc-name">${npc.name}</div>
+                            <div class="npc-location">${npc.location}</div>
+                        </div>
+                        <div>
+                            <span class="quest-status quest-${npc.importance}">${npc.importance.toUpperCase()}</span>
+                            <button class="btn btn-small btn-warning" onclick="editNPC(${npc.id})">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </div>
+                    </div>
+                    <div style="color: var(--rope); font-style: italic; margin-bottom: 1rem;">
+                        ${npc.personality}
+                    </div>
+                    <div class="response-buttons">
+                        <button class="response-btn" onclick="showNPCResponse(${npc.id}, 'greeting')">Greeting</button>
+                        <button class="response-btn" onclick="showNPCResponse(${npc.id}, 'quest')">Quest Info</button>
+                        <button class="response-btn" onclick="showNPCResponse(${npc.id}, 'help')">Ask for Help</button>
+                        <button class="response-btn" onclick="showNPCResponse(${npc.id}, 'goodbye')">Goodbye</button>
+                    </div>
+                    <div id="npcResponse${npc.id}" style="background: rgba(15, 20, 25, 0.7); padding: 1rem; border-radius: 6px; margin-top: 1rem; display: none;">
+                        <!-- NPC response will appear here -->
+                    </div>
+                    <div class="custom-response">
+                        <input type="text" id="customInput${npc.id}" placeholder="Ask something specific...">
+                        <button class="btn btn-small" onclick="addCustomResponse(${npc.id})">Add Response</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Combat Management Functions
+        function loadCombatSection() {
+            updateInitiativeDisplay();
+        }
+
+        function startCombat() {
+            if (gameData.combat.active) {
+                if (!confirm('Combat is already active. Start new combat?')) return;
+            }
+            
+            gameData.combat.active = true;
+            gameData.combat.initiative = [];
+            gameData.combat.currentTurn = 0;
+            gameData.combat.round = 1;
+            
+            // Add all players to initiative
+            gameData.players.forEach(player => {
+                const initiative = Math.floor(Math.random() * 20) + 1;
+                gameData.combat.initiative.push({
+                    id: player.id,
+                    name: player.name,
+                    type: 'player',
+                    initiative: initiative,
+                    hp: player.hp.current,
+                    maxHp: player.hp.max,
+                    ac: player.ac,
+                    statusEffects: [...player.statusEffects]
+                });
+            });
+            
+            // Sort by initiative (highest first)
+            gameData.combat.initiative.sort((a, b) => b.initiative - a.initiative);
+            
+            updateInitiativeDisplay();
+            saveData();
+        }
+
+        function nextTurn() {
+            if (!gameData.combat.active) return;
+            
+            gameData.combat.currentTurn++;
+            if (gameData.combat.currentTurn >= gameData.combat.initiative.length) {
+                gameData.combat.currentTurn = 0;
+                gameData.combat.round++;
+            }
+            
+            updateInitiativeDisplay();
+            startTurnTimer();
+            saveData();
+        }
+
+        function endCombat() {
+            if (!confirm('End combat and return to exploration?')) return;
+            
+            gameData.combat.active = false;
+            gameData.combat.initiative = [];
+            gameData.combat.currentTurn = 0;
+            gameData.combat.round = 1;
+            
+            // Update player health from combat
+            gameData.combat.initiative.forEach(combatant => {
+                if (combatant.type === 'player') {
+                    const player = gameData.players.find(p => p.id === combatant.id);
+                    if (player) {
+                        player.hp.current = combatant.hp;
+                        player.statusEffects = combatant.statusEffects;
+                    }
+                }
+            });
+            
+            updateInitiativeDisplay();
+            loadPartyList(); // Refresh party display
+            saveData();
+        }
+
+        function updateInitiativeDisplay() {
+            const initiativeList = document.getElementById('initiativeList');
+            
+            if (!gameData.combat.active) {
+                initiativeList.innerHTML = '<li style="text-align: center; color: var(--rope); font-style: italic;">No active combat</li>';
+                return;
+            }
+            
+            initiativeList.innerHTML = gameData.combat.initiative.map((combatant, index) => {
+                const isCurrentTurn = index === gameData.combat.currentTurn;
+                const healthPercent = (combatant.hp / combatant.maxHp) * 100;
+                const healthClass = getHealthClass(healthPercent);
+                
+                return `
+                    <li class="initiative-item ${isCurrentTurn ? 'current-turn' : ''}">
+                        <div>
+                            <strong>${combatant.name}</strong>
+                            <div style="font-size: 0.8rem; color: var(--rope);">
+                                Initiative: ${combatant.initiative} | AC: ${combatant.ac}
+                            </div>
+                            ${combatant.statusEffects.length > 0 ? 
+                                `<div style="font-size: 0.7rem; color: var(--warning);">Effects: ${combatant.statusEffects.join(', ')}</div>` : ''
+                            }
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="stat-value ${healthClass}">${combatant.hp}/${combatant.maxHp}</div>
+                            <div style="font-size: 0.8rem;">
+                                <button class="btn btn-small btn-danger" onclick="adjustHP(${index}, -1)">-</button>
+                                <button class="btn btn-small btn-success" onclick="adjustHP(${index}, 1)">+</button>
+                            </div>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+            
+            // Update round counter
+            if (gameData.combat.active) {
+                const roundInfo = document.createElement('div');
+                roundInfo.style.textAlign = 'center';
+                roundInfo.style.marginTop = '1rem';
+                roundInfo.style.color = 'var(--brass)';
+                roundInfo.style.fontWeight = 'bold';
+                roundInfo.innerHTML = `Round ${gameData.combat.round}`;
+                initiativeList.appendChild(roundInfo);
+            }
+        }
+
+        function adjustHP(combatantIndex, amount) {
+            const combatant = gameData.combat.initiative[combatantIndex];
+            combatant.hp = Math.max(0, Math.min(combatant.maxHp, combatant.hp + amount));
+            updateInitiativeDisplay();
+            saveData();
+        }
+
+        function addCombatant() {
+            const name = prompt('Combatant name:');
+            if (!name) return;
+            
+            const initiative = parseInt(prompt('Initiative roll:')) || Math.floor(Math.random() * 20) + 1;
+            const hp = parseInt(prompt('Hit points:')) || 10;
+            const ac = parseInt(prompt('Armor class:')) || 10;
+            
+            gameData.combat.initiative.push({
+                id: Date.now(),
+                name: name,
+                type: 'enemy',
+                initiative: initiative,
+                hp: hp,
+                maxHp: hp,
+                ac: ac,
+                statusEffects: []
+            });
+            
+            // Re-sort initiative
+            gameData.combat.initiative.sort((a, b) => b.initiative - a.initiative);
+            updateInitiativeDisplay();
+            saveData();
+        }
+
+        let turnTimerInterval = null;
+        let remainingTime = 30;
+
+        function startTurnTimer() {
+            if (!document.getElementById('turnTimerToggle').checked) return;
+            
+            clearInterval(turnTimerInterval);
+            remainingTime = gameData.combat.turnTimer;
+            document.getElementById('turnTimer').classList.remove('hidden');
+            
+            turnTimerInterval = setInterval(() => {
+                remainingTime--;
+                document.getElementById('timeRemaining').textContent = remainingTime;
+                
+                if (remainingTime <= 0) {
+                    clearInterval(turnTimerInterval);
+                    alert('Turn time expired!');
+                    document.getElementById('turnTimer').classList.add('hidden');
+                }
+            }, 1000);
+        }
+
+        // Quest Management Functions
+        function loadQuestsSection() {
+            const questDatabase = document.getElementById('questDatabase');
+            const allQuests = [];
+            
+            // Collect all unique quests
+            gameData.players.forEach(player => {
+                player.quests.forEach(quest => {
+                    if (!allQuests.find(q => q.id === quest.id)) {
+                        allQuests.push({
+                            ...quest,
+                            assignedTo: gameData.players.filter(p => p.quests.find(q => q.id === quest.id)).map(p => p.name)
+                        });
+                    }
+                });
+            });
+            
+            questDatabase.innerHTML = allQuests.map(quest => `
+                <div class="quest-item">
+                    <div class="quest-title">
+                        <i class="fas fa-scroll"></i> ${quest.title}
+                    </div>
+                    <span class="quest-status quest-${quest.status}">${quest.status.toUpperCase()}</span>
+                    <p style="margin: 0.5rem 0; color: var(--pearl);">${quest.description}</p>
+                    <div style="color: var(--rope); font-size: 0.8rem;">
+                        Assigned to: ${quest.assignedTo.join(', ')}
+                    </div>
+                    ${quest.reward ? `<div style="color: var(--brass); font-size: 0.8rem;">Reward: ${quest.reward} XP</div>` : ''}
+                    <div style="margin-top: 0.5rem;">
+                        <button class="btn btn-small btn-success" onclick="completeQuest(${quest.id})">Complete</button>
+                        <button class="btn btn-small btn-warning" onclick="editQuest(${quest.id})">Edit</button>
+                        <button class="btn btn-small btn-danger" onclick="failQuest(${quest.id})">Fail</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function completeQuest(questId) {
+            gameData.players.forEach(player => {
+                const quest = player.quests.find(q => q.id === questId);
+                if (quest) {
+                    quest.status = 'completed';
+                    if (quest.reward) {
+                        player.experience.current += quest.reward;
+                        player.experience.total += quest.reward;
+                        checkLevelUp(player);
+                    }
+                }
+            });
+            
+            loadQuestsSection();
+            loadDashboard();
+            saveData();
+            
+            const questTitle = gameData.players[0].quests.find(q => q.id === questId)?.title || 'Unknown Quest';
+            alert(`Quest "${questTitle}" completed! XP awarded to party.`);
+        }
+
+        function failQuest(questId) {
+            if (!confirm('Mark this quest as failed?')) return;
+            
+            gameData.players.forEach(player => {
+                const quest = player.quests.find(q => q.id === questId);
+                if (quest) {
+                    quest.status = 'failed';
+                }
+            });
+            
+            loadQuestsSection();
+            loadDashboard();
+            saveData();
+        }
+
+        function createQuest() {
+            const title = prompt('Quest title:');
+            if (!title) return;
+            
+            const description = prompt('Quest description:');
+            const reward = parseInt(prompt('XP reward (optional):')) || 0;
+            
+            const newQuest = {
+                id: Date.now(),
+                title: title,
+                description: description || '',
+                status: 'active',
+                reward: reward
+            };
+            
+            // Add to all players by default (can be modified later)
+            gameData.players.forEach(player => {
+                player.quests.push({ ...newQuest });
+            });
+            
+            loadQuestsSection();
+            loadDashboard();
+            saveData();
+        }
+
+        // Loot and XP Management Functions
+        function loadLootSection() {
+            loadPartyXPStatus();
+            loadTreasureLog();
+        }
+
+        function loadPartyXPStatus() {
+            const partyXP = document.getElementById('partyXP');
+            partyXP.innerHTML = gameData.players.map(player => {
+                const nextLevel = player.level + 1;
+                const currentXP = player.experience.current;
+                const nextLevelXP = experienceThresholds[nextLevel];
+                const needsLevelUp = nextLevelXP && currentXP >= nextLevelXP;
+                
+                let xpInfo;
+                if (nextLevelXP) {
+                    const progress = ((currentXP - experienceThresholds[player.level]) / 
+                                    (nextLevelXP - experienceThresholds[player.level])) * 100;
+                    xpInfo = `
+                        <div>${currentXP}/${nextLevelXP} XP</div>
+                        <div style="background: rgba(15, 20, 25, 0.8); border-radius: 4px; overflow: hidden; height: 8px; margin-top: 4px;">
+                            <div style="background: var(--brass); height: 100%; width: ${Math.min(100, progress)}%;"></div>
+                        </div>
+                        <div style="font-size: 0.8rem; margin-top: 2px;">${nextLevelXP - currentXP} XP to level ${nextLevel}</div>
+                    `;
+                } else {
+                    xpInfo = `<div>${currentXP} XP (Max Level)</div>`;
+                }
+                
+                return `
+                    <div class="xp-card ${needsLevelUp ? 'pulse' : ''}">
+                        <div class="player-name">${player.name}</div>
+                        <div style="color: var(--rope); font-size: 0.9rem;">Level ${player.level} ${player.class}</div>
+                        <div style="margin-top: 0.5rem;">
+                            ${xpInfo}
+                        </div>
+                        ${needsLevelUp ? `
+                            <div class="level-up-notification">
+                                <i class="fas fa-star"></i> LEVEL UP AVAILABLE!
+                                <button class="btn btn-small" onclick="levelUpPlayer(${player.id})" style="margin-top: 0.5rem;">Level Up</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadTreasureLog() {
+            const treasureLog = document.getElementById('treasureLog');
+            treasureLog.innerHTML = gameData.treasure.map(treasure => `
+                <div class="quest-item">
+                    <div class="quest-title">
+                        <i class="fas fa-gem"></i> ${treasure.name}
+                    </div>
+                    <div style="color: var(--pearl); font-size: 0.9rem; margin-top: 0.3rem;">
+                        ${treasure.description}
+                    </div>
+                    <div style="color: var(--rope); font-size: 0.8rem; margin-top: 0.3rem;">
+                        Session ${treasure.session} • ${treasure.distributed ? 'Distributed' : 'Pending'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function distributeXP() {
+            const amount = parseInt(document.getElementById('xpAmount').value);
+            const reason = document.getElementById('xpReason').value;
+            
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid XP amount');
+                return;
+            }
+            
+            gameData.players.forEach(player => {
+                player.experience.current += amount;
+                player.experience.total += amount;
+                checkLevelUp(player);
+            });
+            
+            // Add to session notes
+            const note = `Awarded ${amount} XP to party for: ${reason || 'General progress'}`;
+            addSessionNote(note);
+            
+            document.getElementById('xpAmount').value = '';
+            document.getElementById('xpReason').value = '';
+            
+            loadLootSection();
+            loadDashboard();
+            saveData();
+            
+            alert(`Awarded ${amount} XP to all party members!`);
+        }
+
+        function checkLevelUp(player) {
+            const nextLevel = player.level + 1;
+            const nextLevelXP = experienceThresholds[nextLevel];
+            
+            if (nextLevelXP && player.experience.current >= nextLevelXP) {
+                // Player can level up - this will be shown in the UI
+                return true;
+            }
+            return false;
+        }
+
+        function levelUpPlayer(playerId) {
+            const player = gameData.players.find(p => p.id === playerId);
+            if (!player) return;
+            
+            const nextLevel = player.level + 1;
+            const nextLevelXP = experienceThresholds[nextLevel];
+            
+            if (nextLevelXP && player.experience.current >= nextLevelXP) {
+                player.level = nextLevel;
+                
+                // Simple HP increase (you can make this more sophisticated)
+                const hpIncrease = Math.floor(Math.random() * 8) + 1; // d8 + con modifier would be more accurate
+                player.hp.max += hpIncrease;
+                player.hp.current += hpIncrease;
+                
+                addSessionNote(`${player.name} leveled up to level ${nextLevel}! Gained ${hpIncrease} HP.`);
+                
+                loadLootSection();
+                loadDashboard();
+                saveData();
+                
+                alert(`${player.name} has reached level ${nextLevel}! Gained ${hpIncrease} HP.`);
+            }
+        }
+
+        function addTreasure() {
+            const name = prompt('Treasure name:');
+            if (!name) return;
+            
+            const description = prompt('Description:');
+            
+            const newTreasure = {
+                id: Date.now(),
+                name: name,
+                description: description || '',
+                session: gameData.currentSession,
+                distributed: false
+            };
+            
+            gameData.treasure.push(newTreasure);
+            loadTreasureLog();
+            saveData();
+        }
+
+        // Session Notes Functions
+        function loadNotesSection() {
+            loadSessionHistory();
+        }
+
+        function loadSessionHistory() {
+            const sessionHistory = document.getElementById('sessionHistory');
+            sessionHistory.innerHTML = gameData.sessionNotes
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .map(note => `
+                    <div class="note-entry">
+                        <div class="note-timestamp">
+                            <i class="fas fa-clock"></i> Session ${note.session} - ${new Date(note.timestamp).toLocaleString()}
+                        </div>
+                        <div style="color: var(--pearl); margin-top: 0.5rem;">
+                            ${note.content}
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        function saveSessionNote() {
+            const content = document.getElementById('currentNotes').value.trim();
+            if (!content) {
+                alert('Please enter some notes before saving');
+                return;
+            }
+            
+            const newNote = {
+                id: Date.now(),
+                timestamp: new Date(),
+                content: content,
+                session: gameData.currentSession
+            };
+            
+            gameData.sessionNotes.push(newNote);
+            document.getElementById('currentNotes').value = '';
+            
+            loadSessionHistory();
+            saveData();
+            
+            alert('Session note saved!');
+        }
+
+        function addSessionNote(content) {
+            const newNote = {
+                id: Date.now(),
+                timestamp: new Date(),
+                content: content,
+                session: gameData.currentSession
+            };
+            
+            gameData.sessionNotes.push(newNote);
+            saveData();
+        }
+
+        // Settings Functions
+        function loadSettingsSection() {
+            loadUserManagement();
+            loadCampaignSettings();
+        }
+
+        function loadUserManagement() {
+            const userManagement = document.getElementById('userManagement');
+            userManagement.innerHTML = `
+                <h4>Current Users</h4>
+                ${gameData.users.map(user => `
+                    <div class="quest-item">
+                        <div class="quest-title">${user.username}</div>
+                        <span class="quest-status quest-${user.role === 'admin' ? 'active' : 'completed'}">${user.role.toUpperCase()}</span>
+                        ${user.id !== currentUser.id ? `
+                            <button class="btn btn-small btn-danger" onclick="deleteUser(${user.id})">Delete</button>
+                        ` : ''}
+                    </div>
+                `).join('')}
+                <button class="btn" onclick="addUser()">
+                    <i class="fas fa-plus"></i> Add User
+                </button>
+            `;
+        }
+
+        function loadCampaignSettings() {
+            document.getElementById('campaignName').value = gameData.campaignName;
+            document.getElementById('currentSession').value = gameData.currentSession;
+        }
+
+        function saveCampaignSettings() {
+            gameData.campaignName = document.getElementById('campaignName').value;
+            gameData.currentSession = parseInt(document.getElementById('currentSession').value);
+            saveData();
+            alert('Campaign settings saved!');
+        }
+
+        function addUser() {
+            const username = prompt('Username:');
+            if (!username) return;
+            
+            const password = prompt('Password:');
+            if (!password) return;
+            
+            const role = prompt('Role (admin/dm/player):') || 'player';
+            
+            if (gameData.users.find(u => u.username === username)) {
+                alert('Username already exists!');
+                return;
+            }
+            
+            gameData.users.push({
+                id: Date.now(),
+                username: username,
+                password: password,
+                role: role
+            });
+            
+            loadUserManagement();
+            saveData();
+        }
+
+        function deleteUser(userId) {
+            if (!confirm('Delete this user?')) return;
+            
+            gameData.users = gameData.users.filter(u => u.id !== userId);
+            loadUserManagement();
+            saveData();
+        }
+
+        // Sourcebook Functions
+        function loadSourcebook() {
+            generateChapterNav();
+            loadChapterContent(1);
+        }
+
+        function generateChapterNav() {
+            const chapterNav = document.getElementById('chapterNav');
+            chapterNav.innerHTML = gameData.sourcebook.chapters.map(chapter => `
+                <button class="chapter-btn ${chapter.id === 1 ? 'active' : ''}" onclick="loadChapterContent(${chapter.id})">
+                    ${chapter.title}
+                </button>
+            `).join('');
+        }
+
+        function loadChapterContent(chapterId) {
+            // Remove active class from all chapter buttons
+            document.querySelectorAll('.chapter-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to selected chapter
+            event?.target.classList.add('active');
+            
+            const chapter = gameData.sourcebook.chapters.find(c => c.id === chapterId);
+            if (!chapter) return;
+            
+            const sourcebookContent = document.getElementById('sourcebookContent');
+            
+            // Load the full sourcebook content based on chapter
+            let content = '';
+            switch(chapterId) {
+                case 1:
+                    content = getWorldOverviewContent();
+                    break;
+                case 2:
+                    content = getCharacterCreationContent();
+                    break;
+                default:
+                    content = chapter.content || 'Content coming soon...';
+            }
+            
+            sourcebookContent.innerHTML = content;
+        }
+
+        function getWorldOverviewContent() {
+            return `
+                <h2>The World of Shadowmar</h2>
+                
+                <h3>The Genesis of Twilight</h3>
+                <p>In the boundless expanse of the <strong>Void</strong>, a spark of pure <strong>shadow</strong> ignited, giving birth to the <strong>Weavers of Shadowmar</strong>. These are not gods, but fundamental aspects of creation itself, working in perfect harmony to shape existence.</p>
+                
+                <ul>
+                    <li><strong>The Weaver of Stars:</strong> Spun the distant suns and the eerie, unique constellations that dominate Shadowmar's perpetual twilight skies.</li>
+                    <li><strong>The Weaver of Worlds:</strong> Forged the very lands and seas of Shadowmar, embedding deep secrets and wonders within them.</li>
+                    <li><strong>The Weaver of Life:</strong> Breathed vitality into every creature, from the smallest bioluminescent fish to the colossal beings of the deep.</li>
+                    <li><strong>The Weaver of Dreams:</strong> Wove the ethereal fabric of dreams and visions, guiding souls and revealing forgotten truths.</li>
+                </ul>
+                
+                <h3>The Continent of Aethel</h3>
+                <p>The known world centers around the continent of <strong>Aethel</strong>, surrounded by vast, often perilous oceans, and dotted with islands both small and colossal.</p>
+                
+                <h4>Major Regions</h4>
+                <ul>
+                    <li><strong>The Shadowed Coast:</strong> Rugged cliffs and dark forests line the shores where most civilizations cling.</li>
+                    <li><strong>The Whispering Plains:</strong> Vast grasslands where ancient secrets are carried on the wind.</li>
+                    <li><strong>The Scarred Mountains:</strong> A jagged range, perpetually mist-shrouded, rumored home to strange creatures.</li>
+                    <li><strong>The Sunken Forest:</strong> A dense, ancient forest in the south, so thick sunlight rarely penetrates.</li>
+                    <li><strong>The Obsidian Desert:</strong> A barren wasteland of black sand and volcanic rock in the south, domain of fire spirits.</li>
+                </ul>
+                
+                <h3>Key Locations</h3>
+                <h4>Xylos, The Drowned City</h4>
+                <p>Once known as the "Gem of the Coast" and "City of Whispering Knowledge," Xylos was the capital of the <strong>Imperium of the Shifting Tides</strong>, an ancient human empire of mages and scholars.</p>
+                
+                <p><strong>The Fall of Xylos:</strong> The Imperium sought ultimate arcane mastery through a grand ritual, <strong>The Conflux of Whispers</strong>. This ritual aimed to merge the city's ley lines with the Sea of Whispers and draw upon the Weaver of Worlds' power. However, they miscalculated; the energy was too vast. The Conflux tore a rift in reality, pulling Xylos into a unique, localized abyssal pocket dimension where physical laws are subtly warped.</p>
+                
+                <h4>Current Inhabitants</h4>
+                <ul>
+                    <li><strong>The Trenchkin:</strong> Adapted aquatic humanoids who scavenge the ruins. They are cautious of outsiders but can be helpful if trust is gained.</li>
+                    <li><strong>The Echoes:</strong> The restless, distorted spirits of the original inhabitants.</li>
+                    <li><strong>The Sentinels of Coral:</strong> Automated guardians still standing watch.</li>
+                    <li><strong>The Abyssal Behemoth:</strong> A monstrous embodiment of the unbound energy that consumed the city, stirring in its deepest parts.</li>
+                </ul>
+            `;
+        }
+
+        function getCharacterCreationContent() {
+            return `
+                <h2>Character Creation & Pirate Roles</h2>
+                
+                <h3>The Pirate Role System</h3>
+                <p>In addition to their class, each character fills a specific role aboard ship. These roles provide mechanical benefits and narrative responsibilities.</p>
+                
+                <h4>The Quartermaster</h4>
+                <p><strong>Recommended Classes:</strong> Bard, Rogue, Warlock</p>
+                <p><strong>Ship Benefits:</strong></p>
+                <ul>
+                    <li>+2 to Persuasion checks in ports</li>
+                    <li>Can appraise treasure value (Investigation + Proficiency)</li>
+                    <li>Advantage on checks to manage ship supplies</li>
+                </ul>
+                <p><strong>Special Abilities:</strong></p>
+                <ul>
+                    <li><strong>Silver Tongue:</strong> Once per long rest, reroll a failed Persuasion check</li>
+                    <li><strong>Treasure Sense:</strong> Can detect magical items within 30 feet</li>
+                </ul>
+                
+                <h4>The Master Gunner</h4>
+                <p><strong>Recommended Classes:</strong> Artificer, Fighter, Sorcerer</p>
+                <p><strong>Ship Benefits:</strong></p>
+                <ul>
+                    <li>+2 to attack rolls with ship weapons</li>
+                    <li>Can repair cannons during combat (action)</li>
+                    <li>Advantage on initiative during naval combat</li>
+                </ul>
+                <p><strong>Special Abilities:</strong></p>
+                <ul>
+                    <li><strong>Artillery Expert:</strong> Ship weapons deal +1d6 damage when you operate them</li>
+                    <li><strong>Powder Monkey:</strong> Can reload ship weapons as a bonus action</li>
+                </ul>
+                
+                <h4>The Navigator</h4>
+                <p><strong>Recommended Classes:</strong> Wizard, Ranger, Druid, Monk</p>
+                <p><strong>Ship Benefits:</strong></p>
+                <ul>
+                    <li>Ship moves +5 mph with favorable winds</li>
+                    <li>Advantage on Survival checks at sea</li>
+                    <li>Can read Shadowmar's constellations for magical insight</li>
+                </ul>
+                <p><strong>Special Abilities:</strong></p>
+                <ul>
+                    <li><strong>Star Reading:</strong> Once per day, cast <em>Augury</em> without spell slots</li>
+                    <li><strong>True Course:</strong> Ship cannot become lost while you navigate</li>
+                </ul>
+                
+                <h4>The Ship's Surgeon</h4>
+                <p><strong>Recommended Classes:</strong> Cleric, Paladin, Blood Hunter, Barbarian</p>
+                <p><strong>Ship Benefits:</strong></p>
+                <ul>
+                    <li>Crew recovers +1 hp per Hit Die during short rests</li>
+                    <li>Can treat diseases and poisons aboard ship</li>
+                    <li>Advantage on Medicine checks</li>
+                </ul>
+                <p><strong>Special Abilities:</strong></p>
+                <ul>
+                    <li><strong>Combat Medic:</strong> Can use Medicine kit as bonus action in combat</li>
+                    <li><strong>Shipboard Healing:</strong> Healing spells cast on ship restore +2 hp</li>
+                </ul>
+            `;
+        }
+
+        function toggleEditMode() {
+            editMode = !editMode;
+            const sourcebookContent = document.getElementById('sourcebookContent');
+            
+            if (editMode) {
+                sourcebookContent.classList.add('edit-mode');
+                sourcebookContent.contentEditable = true;
+                event.target.innerHTML = '<i class="fas fa-eye"></i> View Mode';
+                event.target.classList.remove('btn-warning');
+                event.target.classList.add('btn-info');
+            } else {
+                sourcebookContent.classList.remove('edit-mode');
+                sourcebookContent.contentEditable = false;
+                event.target.innerHTML = '<i class="fas fa-edit"></i> Edit Mode';
+                event.target.classList.remove('btn-info');
+                event.target.classList.add('btn-warning');
+            }
+        }
+
+        function saveChanges() {
+            if (!editMode) {
+                alert('Enter edit mode first');
+                return;
+            }
+            
+            const content = document.getElementById('sourcebookContent').innerHTML;
+            // Here you would save the content to your backend
+            // For now, we'll just show a confirmation
+            alert('Changes saved successfully!');
+            saveData();
+        }
+
+        function addContent() {
+            showEditModal('Add New Content', '', (content) => {
+                // Add new content logic here
+                console.log('Adding new content:', content);
+            });
+        }
+
+        // Utility Functions
+        function showPlayerQuests(playerId) {
+            const player = gameData.players.find(p => p.id === playerId);
+            if (!player) return;
+            
+            document.getElementById('questModalTitle').textContent = `${player.name}'s Quests`;
+            
+            const questContent = player.quests.map(quest => `
+                <div class="quest-item">
+                    <div class="quest-title">
+                        <i class="fas fa-scroll"></i> ${quest.title}
+                    </div>
+                    <span class="quest-status quest-${quest.status}">${quest.status.toUpperCase()}</span>
+                    <p style="margin-top: 0.5rem; color: var(--pearl);">${quest.description}</p>
+                    ${quest.reward ? `<div style="color: var(--brass); font-size: 0.8rem; margin-top: 0.3rem;">Reward: ${quest.reward} XP</div>` : ''}
+                    <div style="margin-top: 0.5rem;">
+                        <button class="btn btn-small btn-success" onclick="completePlayerQuest(${playerId}, ${quest.id})">Complete</button>
+                        <button class="btn btn-small btn-danger" onclick="failPlayerQuest(${playerId}, ${quest.id})">Fail</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('questModalContent').innerHTML = questContent;
+            document.getElementById('questModal').style.display = 'block';
+        }
+
+        function completePlayerQuest(playerId, questId) {
+            const player = gameData.players.find(p => p.id === playerId);
+            const quest = player.quests.find(q => q.id === questId);
+            
+            if (quest) {
+                quest.status = 'completed';
+                if (quest.reward) {
+                    player.experience.current += quest.reward;
+                    player.experience.total += quest.reward;
+                    checkLevelUp(player);
+                }
+                
+                showPlayerQuests(playerId); // Refresh modal
+                loadDashboard(); // Refresh dashboard
+                saveData();
+                
+                alert(`Quest "${quest.title}" completed! ${quest.reward || 0} XP awarded.`);
+            }
+        }
+
+        function failPlayerQuest(playerId, questId) {
+            const player = gameData.players.find(p => p.id === playerId);
+            const quest = player.quests.find(q => q.id === questId);
+            
+            if (quest && confirm(`Mark "${quest.title}" as failed?`)) {
+                quest.status = 'failed';
+                showPlayerQuests(playerId); // Refresh modal
+                loadDashboard(); // Refresh dashboard
+                saveData();
+            }
+        }
+
+        function openNPCDialog(npcId) {
+            const npc = gameData.npcs.find(n => n.id === npcId);
+            if (!npc) return;
+            
+            document.getElementById('npcModalContent').innerHTML = `
+                <div class="npc-dialog">
+                    <div class="npc-header">
+                        <div>
+                            <div class="npc-name">${npc.name}</div>
+                            <div class="npc-location">${npc.location}</div>
+                        </div>
+                        <span class="quest-status quest-${npc.importance}">${npc.importance.toUpperCase()}</span>
+                    </div>
+                    <div style="color: var(--rope); font-style: italic; margin-bottom: 1rem;">
+                        "${npc.personality}"
+                    </div>
+                    <div class="response-buttons">
+                        <button class="response-btn" onclick="showNPCResponse(${npc.id}, 'greeting')">Greeting</button>
+                        <button class="response-btn" onclick="showNPCResponse(${npc.id}, 'quest')">Quest Info</button>
+                        <button class="response-btn" onclick="showNPCResponse(${npc.id}, 'help')">Ask for Help</button>
+                        <button class="response-btn" onclick="showNPCResponse(${npc.id}, 'goodbye')">Goodbye</button>
+                    </div>
+                    <div id="npcResponseDialog" style="background: rgba(15, 20, 25, 0.7); padding: 1rem; border-radius: 6px; margin-top: 1rem; display: none;">
+                        <!-- NPC response will appear here -->
+                    </div>
+                    <div class="custom-response">
+                        <input type="text" id="customDialogInput" placeholder="Ask something specific...">
+                        <button class="btn btn-small" onclick="addCustomDialogResponse(${npc.id})">Add Response</button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('npcModal').style.display = 'block';
+        }
+
+        function showNPCResponse(npcId, responseType) {
+            const npc = gameData.npcs.find(n => n.id === npcId);
+            if (!npc || !npc.responses[responseType]) return;
+            
+            const responses = npc.responses[responseType];
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            
+            const responseDiv = document.getElementById('npcResponseDialog');
+            responseDiv.innerHTML = `
+                <div style="color: var(--brass); font-weight: bold; margin-bottom: 0.5rem;">
+                    ${npc.name} (${responseType}):
+                </div>
+                <div style="color: var(--pearl); font-style: italic;">
+                    "${randomResponse}"
+                </div>
+            `;
+            responseDiv.style.display = 'block';
+        }
+
+        function addCustomDialogResponse(npcId) {
+            const input = document.getElementById('customDialogInput');
+            const customText = input.value.trim();
+            
+            if (!customText) return;
+            
+            const responseDiv = document.getElementById('npcResponseDialog');
+            responseDiv.innerHTML = `
+                <div style="color: var(--brass); font-weight: bold; margin-bottom: 0.5rem;">
+                    Custom Response:
+                </div>
+                <div style="color: var(--pearl); font-style: italic;">
+                    "${customText}"
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <button class="btn btn-small btn-success" onclick="saveCustomResponse(${npcId}, '${customText}')">Save Response</button>
+                </div>
+            `;
+            responseDiv.style.display = 'block';
+            input.value = '';
+        }
+
+        function saveCustomResponse(npcId, response) {
+            const npc = gameData.npcs.find(n => n.id === npcId);
+            if (!npc) return;
+            
+            if (!npc.responses.custom) {
+                npc.responses.custom = [];
+            }
+            
+            npc.responses.custom.push(response);
+            saveData();
+            alert('Custom response saved!');
+        }
+
+        function showNPCResponse(npcId, responseType) {
+            const npc = gameData.npcs.find(n => n.id === npcId);
+            if (!npc || !npc.responses[responseType]) return;
+            
+            const responses = npc.responses[responseType];
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            
+            const responseDiv = document.getElementById(`npcResponse${npcId}`);
+            if (responseDiv) {
+                responseDiv.innerHTML = `
+                    <div style="color: var(--brass); font-weight: bold; margin-bottom: 0.5rem;">
+                        ${npc.name} (${responseType}):
+                    </div>
+                    <div style="color: var(--pearl); font-style: italic;">
+                        "${randomResponse}"
+                    </div>
+                `;
+                responseDiv.style.display = 'block';
+            }
+        }
+
+        function addCustomResponse(npcId) {
+            const input = document.getElementById(`customInput${npcId}`);
+            const customText = input.value.trim();
+            
+            if (!customText) return;
+            
+            const responseDiv = document.getElementById(`npcResponse${npcId}`);
+            responseDiv.innerHTML = `
+                <div style="color: var(--brass); font-weight: bold; margin-bottom: 0.5rem;">
+                    Custom Response:
+                </div>
+                <div style="color: var(--pearl); font-style: italic;">
+                    "${customText}"
+                </div>
+            `;
+            responseDiv.style.display = 'block';
+            input.value = '';
+        }
+
+        // Battle Map Functions
+        function openBattleMap() {
+            document.getElementById('battleMapModal').style.display = 'block';
+            initializeBattleMap();
+        }
+
+        function initializeBattleMap() {
+            const battleMap = document.getElementById('battleMap');
+            battleMap.innerHTML = '';
+            
+            // Add click handler for token placement and measurement
+            battleMap.addEventListener('click', handleBattleMapClick);
+            
+            // Load existing tokens
+            gameData.battleMap.tokens.forEach(token => {
+                createTokenElement(token);
+            });
+        }
+
+        function handleBattleMapClick(e) {
+            const rect = e.target.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Snap to grid
+            const gridX = Math.floor(x / gameData.battleMap.gridSize) * gameData.battleMap.gridSize + gameData.battleMap.gridSize / 2;
+            const gridY = Math.floor(y / gameData.battleMap.gridSize) * gameData.battleMap.gridSize + gameData.battleMap.gridSize / 2;
+            
+            if (measuringMode) {
+                handleMeasurement(gridX, gridY);
+            }
+            
+            // Handle spell template placement
+            const spellTemplate = document.getElementById('spellTemplate').value;
+            if (spellTemplate) {
+                placeSpellTemplate(gridX, gridY, parseInt(spellTemplate));
+            }
+        }
+
+        function addToken(type) {
+            const name = prompt(`Enter ${type} name:`);
+            if (!name) return;
+            
+            const token = {
+                id: Date.now(),
+                name: name,
+                type: type,
+                x: 100,
+                y: 100
+            };
+            
+            gameData.battleMap.tokens.push(token);
+            createTokenElement(token);
+            saveData();
+        }
+
+        function createTokenElement(token) {
+            const tokenElement = document.createElement('div');
+            tokenElement.className = `token token-${token.type}`;
+            tokenElement.style.left = token.x + 'px';
+            tokenElement.style.top = token.y + 'px';
+            tokenElement.textContent = token.name.charAt(0).toUpperCase();
+            tokenElement.title = token.name;
+            tokenElement.draggable = true;
+            
+            // Add drag functionality
+            tokenElement.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', token.id);
+            });
+            
+            tokenElement.addEventListener('dragend', (e) => {
+                const rect = document.getElementById('battleMap').getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Snap to grid
+                token.x = Math.floor(x / gameData.battleMap.gridSize) * gameData.battleMap.gridSize + gameData.battleMap.gridSize / 2 - 15;
+                token.y = Math.floor(y / gameData.battleMap.gridSize) * gameData.battleMap.gridSize + gameData.battleMap.gridSize / 2 - 15;
+                
+                tokenElement.style.left = token.x + 'px';
+                tokenElement.style.top = token.y + 'px';
+                
+                saveData();
+            });
+            
+            document.getElementById('battleMap').appendChild(tokenElement);
+        }
+
+        function clearTokens() {
+            if (!confirm('Clear all tokens from the map?')) return;
+            
+            gameData.battleMap.tokens = [];
+            document.querySelectorAll('.token').forEach(token => token.remove());
+            document.querySelectorAll('.spell-template').forEach(template => template.remove());
+            document.querySelectorAll('.measurement-line').forEach(line => line.remove());
+            saveData();
+        }
+
+        function toggleGrid() {
+            const battleMap = document.getElementById('battleMap');
+            gameData.battleMap.showGrid = !gameData.battleMap.showGrid;
+            
+            if (gameData.battleMap.showGrid) {
+                battleMap.style.backgroundImage = 
+                    'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)';
+                battleMap.style.backgroundSize = `${gameData.battleMap.gridSize}px ${gameData.battleMap.gridSize}px`;
+            } else {
+                battleMap.style.backgroundImage = 'none';
+            }
+            
+            saveData();
+        }
+
+        function placeSpellTemplate(x, y, radius) {
+            // Remove existing templates
+            document.querySelectorAll('.spell-template').forEach(template => template.remove());
+            
+            const template = document.createElement('div');
+            template.className = 'spell-template';
+            template.style.left = (x - radius) + 'px';
+            template.style.top = (y - radius) + 'px';
+            template.style.width = (radius * 2) + 'px';
+            template.style.height = (radius * 2) + 'px';
+            
+            document.getElementById('battleMap').appendChild(template);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                template.remove();
+            }, 5000);
+        }
+
+        function toggleMeasurement() {
+            measuringMode = !measuringMode;
+            
+            if (measuringMode) {
+                event.target.textContent = 'Stop Measuring';
+                event.target.classList.add('btn-warning');
+                measureStart = null;
+            } else {
+                event.target.textContent = 'Measure Distance';
+                event.target.classList.remove('btn-warning');
+                // Clear measurement lines
+                document.querySelectorAll('.measurement-line').forEach(line => line.remove());
+            }
+        }
+
+        function handleMeasurement(x, y) {
+            if (!measureStart) {
+                measureStart = { x, y };
+                return;
+            }
+            
+            // Calculate distance
+            const dx = x - measureStart.x;
+            const dy = y - measureStart.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distanceInFeet = Math.round((distance / gameData.battleMap.gridSize) * 5);
+            
+            // Create measurement line
+            const line = document.createElement('div');
+            line.className = 'measurement-line';
+            line.style.left = measureStart.x + 'px';
+            line.style.top = measureStart.y + 'px';
+            line.style.width = distance + 'px';
+            line.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+            
+            // Add distance label
+            const label = document.createElement('div');
+            label.style.position = 'absolute';
+            label.style.top = '-20px';
+            label.style.left = '50%';
+            label.style.transform = 'translateX(-50%)';
+            label.style.background = 'var(--ocean-blue)';
+            label.style.color = 'var(--pearl)';
+            label.style.padding = '2px 6px';
+            label.style.borderRadius = '4px';
+            label.style.fontSize = '0.8rem';
+            label.textContent = `${distanceInFeet} ft`;
+            line.appendChild(label);
+            
+            document.getElementById('battleMap').appendChild(line);
+            
+            measureStart = null;
+        }
+
+        // Quick Action Functions
+        function rollInitiative() {
+            startCombat();
+        }
+
+        function awardXP() {
+            showSection('loot');
+        }
+
+        function addNPC() {
+            createNPC();
+        }
+
+        function updateLocation() {
+            const newLocation = prompt('Enter new location:', gameData.currentLocation);
+            if (newLocation) {
+                gameData.currentLocation = newLocation;
+                gameData.players.forEach(player => {
+                    player.location = newLocation;
+                });
+                
+                addSessionNote(`Party moved to: ${newLocation}`);
+                loadDashboard();
+                saveData();
+            }
+        }
+
+        function sessionNotes() {
+            showSection('notes');
+        }
+
+        function randomEncounter() {
+            const encounters = [
+                'Echo Patrol - 1d3 Echoes drift through, sharing memory fragments',
+                'Trenchkin Market - Temporary stalls with underwater merchants', 
+                'Coral Sentinel - Inactive guardian that activates if threatened',
+                'Whisper Wind - Messages from the past carried on magical breezes',
+                'Lost Soul - Confused Echo seeks help finding their way',
+                'Scavenger Band - 2d4 Trenchkin searching for salvage',
+                'Memory Pool - Puddle that shows visions of the city\'s past',
+                'Ancient Merchant - Echo who still thinks they\'re selling goods',
+                'Talking Statue - Enchanted artwork that serves as an oracle',
+                'Time Distortion - Area where past and present briefly overlap'
+            ];
+            const encounter = encounters[Math.floor(Math.random() * encounters.length)];
+            
+            addSessionNote(`Random Encounter: ${encounter}`);
+            alert(`Random Encounter: ${encounter}`);
+        }
+
+        function createNPC() {
+            showEditModal('Create New NPC', '', (formData) => {
+                const newNPC = {
+                    id: Date.now(),
+                    name: formData.name,
+                    location: formData.location || gameData.currentLocation,
+                    role: formData.role || 'General NPC',
+                    importance: formData.importance || 'low',
+                    personality: formData.personality || '',
+                    responses: {
+                        greeting: [formData.greeting || 'Hello there.'],
+                        quest: [formData.quest || 'I have nothing for you right now.'],
+                        help: [formData.help || 'I\'m not sure I can help.'],
+                        goodbye: [formData.goodbye || 'Farewell.'],
+                        custom: []
+                    }
+                };
+                
+                gameData.npcs.push(newNPC);
+                loadNPCSection();
+                loadDashboard();
+                saveData();
+            });
+        }
+
+        function editNPC(npcId) {
+            const npc = gameData.npcs.find(n => n.id === npcId);
+            if (!npc) return;
+            
+            showEditModal('Edit NPC', npc, (formData) => {
+                npc.name = formData.name;
+                npc.location = formData.location;
+                npc.role = formData.role;
+                npc.importance = formData.importance;
+                npc.personality = formData.personality;
+                
+                loadNPCSection();
+                loadDashboard();
+                saveData();
+            });
+        }
+
+        function editPlayer(playerId) {
+            const player = gameData.players.find(p => p.id === playerId);
+            if (!player) return;
+            
+            showEditModal('Edit Player', player, (formData) => {
+                player.name = formData.name;
+                player.class = formData.class;
+                player.level = parseInt(formData.level);
+                player.role = formData.role;
+                player.hp.max = parseInt(formData.maxHp);
+                player.hp.current = Math.min(player.hp.current, player.hp.max);
+                player.ac = parseInt(formData.ac);
+                
+                loadPlayersSection();
+                loadDashboard();
+                saveData();
+            });
+        }
+
+        function editHP(playerId) {
+            const player = gameData.players.find(p => p.id === playerId);
+            if (!player) return;
+            
+            const newHP = prompt(`Current HP for ${player.name} (max ${player.hp.max}):`, player.hp.current);
+            if (newHP !== null) {
+                const hp = parseInt(newHP);
+                if (!isNaN(hp)) {
+                    player.hp.current = Math.max(0, Math.min(player.hp.max, hp));
+                    loadDashboard();
+                    saveData();
+                }
+            }
+        }
+
+        function editSpellSlot(playerId, level) {
+            const player = gameData.players.find(p => p.id === playerId);
+            if (!player || !player.spellSlots[level]) return;
+            
+            const slot = player.spellSlots[level];
+            const newCurrent = prompt(`${level} spell slots for ${player.name} (max ${slot.max}):`, slot.current);
+            
+            if (newCurrent !== null) {
+                const current = parseInt(newCurrent);
+                if (!isNaN(current)) {
+                    slot.current = Math.max(0, Math.min(slot.max, current));
+                    loadDashboard();
+                    saveData();
+                }
+            }
+        }
+
+        function addPlayer() {
+            showEditModal('Add New Player', {}, (formData) => {
+                const newPlayer = {
+                    id: Date.now(),
+                    name: formData.name,
+                    class: formData.class || 'Fighter',
+                    level: parseInt(formData.level) || 1,
+                    role: formData.role || 'Crew Member',
+                    hp: { 
+                        current: parseInt(formData.maxHp) || 10, 
+                        max: parseInt(formData.maxHp) || 10 
+                    },
+                    ac: parseInt(formData.ac) || 10,
+                    location: gameData.currentLocation,
+                    statusEffects: [],
+                    spellSlots: {},
+                    experience: { current: 0, total: 0 },
+                    quests: []
+                };
+                
+                gameData.players.push(newPlayer);
+                loadPlayersSection();
+                loadDashboard();
+                saveData();
+            });
+        }
+
+        function showEditModal(title, data, onSave) {
+            document.getElementById('editModalTitle').textContent = title;
+            
+            let formHTML = '';
+            
+            if (title.includes('NPC')) {
+                formHTML = `
+                    <div class="form-group">
+                        <label>Name:</label>
+                        <input type="text" id="editName" value="${data.name || ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Location:</label>
+                        <input type="text" id="editLocation" value="${data.location || gameData.currentLocation}">
+                    </div>
+                    <div class="form-group">
+                        <label>Role:</label>
+                        <input type="text" id="editRole" value="${data.role || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Importance:</label>
+                        <select id="editImportance">
+                            <option value="low" ${data.importance === 'low' ? 'selected' : ''}>Low</option>
+                            <option value="medium" ${data.importance === 'medium' ? 'selected' : ''}>Medium</option>
+                            <option value="high" ${data.importance === 'high' ? 'selected' : ''}>High</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Personality:</label>
+                        <textarea id="editPersonality" rows="3">${data.personality || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Greeting Response:</label>
+                        <input type="text" id="editGreeting" value="${data.responses?.greeting?.[0] || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Quest Response:</label>
+                        <input type="text" id="editQuest" value="${data.responses?.quest?.[0] || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Help Response:</label>
+                        <input type="text" id="editHelp" value="${data.responses?.help?.[0] || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Goodbye Response:</label>
+                        <input type="text" id="editGoodbye" value="${data.responses?.goodbye?.[0] || ''}">
+                    </div>
+                `;
+            } else if (title.includes('Player')) {
+                formHTML = `
+                    <div class="form-group">
+                        <label>Name:</label>
+                        <input type="text" id="editName" value="${data.name || ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Class:</label>
+                        <input type="text" id="editClass" value="${data.class || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Level:</label>
+                        <input type="number" id="editLevel" value="${data.level || 1}" min="1" max="20">
+                    </div>
+                    <div class="form-group">
+                        <label>Ship Role:</label>
+                        <select id="editRole">
+                            <option value="Quartermaster" ${data.role === 'Quartermaster' ? 'selected' : ''}>Quartermaster</option>
+                            <option value="Master Gunner" ${data.role === 'Master Gunner' ? 'selected' : ''}>Master Gunner</option>
+                            <option value="Navigator" ${data.role === 'Navigator' ? 'selected' : ''}>Navigator</option>
+                            <option value="Ship's Surgeon" ${data.role === "Ship's Surgeon" ? 'selected' : ''}>Ship's Surgeon</option>
+                            <option value="Crew Member" ${data.role === 'Crew Member' ? 'selected' : ''}>Crew Member</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Max HP:</label>
+                        <input type="number" id="editMaxHp" value="${data.hp?.max || 10}" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Armor Class:</label>
+                        <input type="number" id="editAc" value="${data.ac || 10}" min="1">
+                    </div>
+                `;
+            }
+            
+            formHTML += `
+                <div style="margin-top: 2rem;">
+                    <button class="btn btn-success" onclick="saveEditModal()">Save Changes</button>
+                    <button class="btn" onclick="closeModal('editModal')">Cancel</button>
+                </div>
+            `;
+            
+            document.getElementById('editModalContent').innerHTML = formHTML;
+            document.getElementById('editModal').style.display = 'block';
+            
+            // Store the save callback
+            window.currentEditSave = onSave;
+        }
+
+        function saveEditModal() {
+            const formData = {
+                name: document.getElementById('editName')?.value,
+                location: document.getElementById('editLocation')?.value,
+                role: document.getElementById('editRole')?.value,
+                importance: document.getElementById('editImportance')?.value,
+                personality: document.getElementById('editPersonality')?.value,
+                class: document.getElementById('editClass')?.value,
+                level: document.getElementById('editLevel')?.value,
+                maxHp: document.getElementById('editMaxHp')?.value,
+                ac: document.getElementById('editAc')?.value,
+                greeting: document.getElementById('editGreeting')?.value,
+                quest: document.getElementById('editQuest')?.value,
+                help: document.getElementById('editHelp')?.value,
+                goodbye: document.getElementById('editGoodbye')?.value
+            };
+            
+            if (window.currentEditSave) {
+                window.currentEditSave(formData);
+            }
+            
+            closeModal('editModal');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Auto-save functionality
+        setInterval(() => {
+            if (currentUser) {
+                saveData();
+            }
+        }, 30000); // Save every 30 seconds
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        saveData();
+                        break;
+                    case 'b':
+                        e.preventDefault();
+                        if (document.getElementById('dashboard').style.display !== 'none') {
+                            openBattleMap();
+                        }
+                        break;
+                }
+            }
+            
+            // Space bar to advance initiative
+            if (e.code === 'Space' && gameData.combat.active && 
+                !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+                e.preventDefault();
+                nextTurn();
+            }
+        });
+    </script>
+</body>
+</html>
